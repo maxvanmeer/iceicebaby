@@ -87,3 +87,5 @@ QLHV = Comb.QLHV;
 Qin = mfuel*QLHV;
 eff = W/Qin;
 % etcetera
+
+%implementing new efficiency here
