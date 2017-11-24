@@ -11,7 +11,7 @@ Mi = [SpS.Mass];Nsp = length(Mi);
 pI=Int.p;TI=Int.T;
 pE=Exh.p;TE=Exh.T;
 %%
-p=y(1);T=y(2);mi=y(3:end);
+p=y(1);T=y(2);mi=y(3:end); %Note that p and T are swapped compared to the slides
 m = sum(mi);
 [V,dVdt,A]=CylVolumeFie(t);
 Yi = [mi/m]';
@@ -96,6 +96,8 @@ dQcomb_real = ei*dmidt_c;
 dQhl        = alfa*A*(Twall-T);
 %% DAE formulation
 Rg = StateCyl.Rg;
-yp = [dQhl-p*dVdt+hpaI*dmdtI+hpaE*dmdtE;p*V-Rg*T*m;dmidt];
+yp = [dQhl-p*dVdt+hpaI*dmdtI+hpaE*dmdtE;
+    p*V-Rg*T*m;
+    dmidt];
 end
 
