@@ -1,6 +1,6 @@
 function [V,dVdt,A] = CylVolumeFie(t)
 global  rc LCon Stroke Bore N omega % Engine globals
-VDisp   = pi*(Bore/2)^2*Stroke;
+VDisp   = pi*(Bore/2)^2*Stroke
 Vc      = VDisp/(rc-1);             % clearance volume (m^3)
 Rc      = Stroke/2;                 % Radius crank
 r       = Rc/LCon;
