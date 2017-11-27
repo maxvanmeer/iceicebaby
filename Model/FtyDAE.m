@@ -15,10 +15,10 @@ p=y(1);T=y(2);mi=y(3:end); %Note that p and T are swapped compared to the slides
 m = sum(mi);
 [V,dVdt,A]=CylVolumeFie(t);
 Yi = [mi/m]';
-%%
-Ca          = time2ang(t,omega)/(2*pi)*360;
-reducedCa   = mod(Ca+360,720)-360;
-CADS        = omega/(2*pi)*360;
+%% Crank angles
+Ca          = time2ang(t,omega)/(2*pi)*360;                                 %Total angle
+reducedCa   = mod(Ca+360,720)-360;                                          %Actual location
+CADS        = omega/(2*pi)*360;                                             %REVS*360
 %%
 for ii=1:Nsp
     hi(ii) = HNasa(T,SpS(ii));
@@ -92,7 +92,7 @@ dmfuComb    = EtaComb*mfuIVCClose*pdf(GaussatCA50,reducedCa)*CADS;
 dmidt_c     = si'*dmfuComb;
 dmidt       = dmidt - dmidt_c;
 dQcomb      = QLHV*dmfuComb;
-dQcomb_real = ei*dmidt_c;
+dQcomb_real = ei*dmidt_c;                                                   %unused??
 dQhl        = alfa*A*(Twall-T);
 %% DAE formulation
 Rg = StateCyl.Rg;

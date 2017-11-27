@@ -104,6 +104,7 @@ Settings.N      = N;
 Settings.EGR    = EGRf;
 Settings.AF     = AF;
 Settings.Ncyc   = Ncyc;                                                     %Added info about the number of cycles
+Settings.omega  = omega;                                                    %Added info about the angular velocity
 %% Set initial solution (it is an DAE problem so we must initialize)
 iCase = 2;                                                                  % v2 --> adjusted version. The non-adjusted version is 1. 
 y0(1)=p0;y0(2)=T0;y0(3:3+Nsp-1) = mass*[Int.Y];
@@ -118,6 +119,7 @@ odopt=odeset('RelTol',1e-4,'Mass',@MassDAE,'MassSingular','yes');           % Se
 tic;
 [time,y]=ode15s(@FtyDAE,tspan,y0,odopt);                                    % Take a specific solver
 tel=toc;
+Comb.mfuIVCClose = mfuIVCClose;                                             %Added info about the ?
 fprintf('Spent time %9.2f (solver %s)\n',tel,'ode15s');
 %% Specify SaveName
 CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];

@@ -90,3 +90,11 @@ eff = W/Qin;
 T_all = W_all/(2*pi*(nREVS/Settings.Ncyc));
 T_mean = sum(T_all)/(Settings.Ncyc);
 T_V6 = 6*T_mean;
+
+%% Heat release rate
+Ca          = time2ang(t,Settings.omega)/(2*pi)*360;                                %Total angle
+reducedCa   = mod(Ca+360,720)-360;                                                  %Actual location
+CADS        = Settings.omega/(2*pi)*360;                                            %REVS*360
+dmfuComb = Comb.eta*Comb.mfuIVCClose*pdf(Comb.Shape,reducedCa)*CADS;                %Comb.mfuIVCClose is not a correct value!
+figure(3)   
+plot(reducedCa,dmfuComb)                                                            %Heat Release Rate
