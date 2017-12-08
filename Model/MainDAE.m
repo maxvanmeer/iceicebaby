@@ -7,6 +7,12 @@ global Runiv SpS QLHV
 Runiv = 8.3144598;
 %% Datadir just to show how you can organize output
 DataDir = 'output';
+
+%% Engine Parameters
+global iCase
+iCase = input('Select your loadcase (122 t/m 131))');
+CaseName = ['cases.mat'];
+load(CaseName);
 %% Units, for convenience only
 g=1e-3;
 ms=1e-3; 
@@ -19,8 +25,9 @@ LCon    = 261.6*mm;                 % connecting rod length
 Stroke  = 158*mm;                   % stroke
 Bore    = 130*mm;                   % bore
 rc      = 17.45;                    % compression ratio
-N       = 2000;                     % RPM
+N       = allCases(iCase-121).RPM_act;          % RPM
 Cyl.LCon = LCon;Cyl.Stroke=Stroke;Cyl.Bore=Bore;Cyl.rc=rc;
+
 %% Simple combustion model settings (a gaussian distribution)
 global GaussatCA50 mfuIVCClose si EtaComb
 CA50=10;                        % CA50 (50% HR)
@@ -31,8 +38,8 @@ Comb.Shape  = GaussatCA50;
 Comb.eta    = EtaComb;
 Tparts = [400 475 630 415 840]; 
 %% Intake and exhaust pressures
-p_plenum  = 3.5*bara;               % plenum pressure
-T_plenum  = 300;                    % plenum temperature
+p_plenum  = allCases(iCase-121).p_plenum*bara;               % plenum pressure
+T_plenum  = allCases(iCase-121).T_plenum;                    % plenum temperature
 p_exhaust = p_plenum+0.1*bara;      % exhaust back-pressure
 T_exhaust  = 400;                   % plenum temperature
 
@@ -64,7 +71,7 @@ si      = nui.*Mi/Mi(1);                                        % Reaction stoic
 AFstoi_molar  = nui(2)+nui(2)*Xair(3)/Xair(2);                  % So-called stoichiometric air fuel ratio (fuel property for given air composition), sometimes students use this as AFstoi.
 AFstoi  = si(2)+si(2)*Yair(3)/Yair(2);                          % So-called stoichiometric air fuel ratio (fuel property for given air composition)
 %% Set simulation time
-Ncyc    = 10;
+Ncyc    = 20;
 REVS    = N/60;
 omega   = REVS*2*pi;
 tcyc    = (2/REVS);
@@ -73,9 +80,9 @@ t       = [0:0.1:360]./360*tcyc*Ncyc;
 V0      = CylVolumeFie(t(1));
 T0      = 273;
 p0      = 3.5*bara;                                             % Typical full load set point
-lambda  = 1.6;                                                  
+lambda  = allCases(iCase-121).lambda_AF;                                                  
 AF      = AFstoi*lambda;                                        % Real AF ratio
-EGRf    = 0.15;                                                 % EGR fraction (mass based)
+EGRf    = allCases(iCase-121).EGRf/100;                                                 % EGR fraction (mass based)
 fracfu  = 1/(AF+1);
 fracair = 1 - fracfu;
 YReactants = fracfu*Yfuel + fracair*Yair;                       % Composition vector
@@ -105,7 +112,6 @@ Settings.EGR    = EGRf;
 Settings.AF     = AF;
 Settings.Ncyc   = Ncyc;                                                     %Added info about the number of cycles
 %% Set initial solution (it is an DAE problem so we must initialize)
-iCase = 2;                                                                  % v2 --> adjusted version. The non-adjusted version is 1. 
 y0(1)=p0;y0(2)=T0;y0(3:3+Nsp-1) = mass*[Int.Y];
 yNames={'p','T','','','','',''};
 for i=3:3+length(Names)-1
