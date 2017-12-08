@@ -97,9 +97,9 @@ pl=loglog(V/liter,p/bara,'-',Vp/liter,pp/bara,'r-');
 set(pl(end),'LineWidth',2);
 xlabel('log V [l]');ylabel('log p [bara]');
 %% Computations
-W   = trapz(Vp,pp) % Work, integral pdV
-Wcomp_exp = trapz(Vcomp_exp,pcomp_exp)
-W_pumploop = trapz(V_pumploop, p_pumploop)
+W   = trapz(Vp,pp); % Work, integral pdV
+Wcomp_exp = trapz(Vcomp_exp,pcomp_exp);
+W_pumploop = trapz(V_pumploop, p_pumploop);
 
 
 for i = 1:size(it_all,2)
@@ -117,16 +117,16 @@ line(t(index)*[1 1]/ms,mfuel*[1 1]/g,'Marker','o','MarkerSize',8,'MarkerFaceColo
 tx=text(t(index)*[1 1]/ms,1.1*mfuel*[1 1]/g,'Selected fuel mass','Rotation',45);
 QLHV = Comb.QLHV;
 Qin = mfuel*QLHV;
-eff = W/Qin;
+eff = W/Qin
 %% Torque for 6 cyclinders
 T_all = W_all/(2*pi*(nREVS/Settings.Ncyc));
 T_mean = sum(T_all)/(Settings.Ncyc);
 T_V6 = 6*T_mean;
 
-bsfc = mfuel/W*1000/J;
-IMEP_net = W/VDisp; % [Pa]
-IMEP_gross = Wcomp_exp/VDisp;
-PMEP = W_pumploop/VDisp;
+bsfc = mfuel/W*1000/J
+IMEP_net = W/VDisp % [Pa]
+IMEP_gross = Wcomp_exp/VDisp
+PMEP = W_pumploop/VDisp
 
 
 
