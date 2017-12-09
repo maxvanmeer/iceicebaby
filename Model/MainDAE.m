@@ -105,7 +105,7 @@ Settings.EGR    = EGRf;
 Settings.AF     = AF;
 Settings.Ncyc   = Ncyc;                                                     %Added info about the number of cycles
 %% Set initial solution (it is an DAE problem so we must initialize)
-iCase = 1;                                                                  % v2 --> adjusted version. The non-adjusted version is 1. 
+iCase = 2;                                                                  % v2 --> adjusted version. The non-adjusted version is 1. 
 y0(1)=p0;y0(2)=T0;y0(3:3+Nsp-1) = mass*[Int.Y];
 yNames={'p','T','','','','',''};
 for i=3:3+length(Names)-1

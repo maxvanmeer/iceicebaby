@@ -21,7 +21,7 @@ m = sum(mi);
 Yi = [mi/m]';
 %%
 Ca          = time2ang(t,omega)/(2*pi)*360;
-reducedCa   = mod(Ca+360,720)-360;
+reducedCa   = mod(Ca+360,720)-360
 CADS        = omega/(2*pi)*360;
 %%
 for ii=1:Nsp
@@ -99,33 +99,51 @@ dQcomb      = QLHV*dmfuComb;
 dQcomb_real = ei*dmidt_c;
 
 %% Woshni heatloss
-C1 = 2.28;
-C2 = 0;
-if (dmdtI > 0) || (dmdtE > 0)
-C1 = 6.18;
-C2 = 0;
-phase = "intake/exhaust"
-end
-if (dmfuComb > 0)
-C1 = 2.28;
-C2 = 3.24*10-3;
-phase = "combustion"
+%normal model
+CA50=10;                        % CA50 (50% HR), replace with 
+BDUR=20;                        % Burn Duration, replace with data case
+CAign = CA50-0.5*BDUR;
+CAend = CAign+BDUR;
+
+%for the intake/exhaust Ca, look at 'valvedata.mat'
+if reducedCa >= CAign && reducedCa <= CAend         %combustion phase
+    C1 = 2.28;
+    C2 = 3.24*10-3;
+elseif (reducedCa >= -360 && reducedCa <= -108) || (reducedCa >= 91 && reducedCa <= 360)      %Intake/Exhaust phase
+    C1 = 6.18;
+    C2 = 0;
+else
+    C1 = 2.28;
+    C2 = 0;
 end
 
 V0      = CylVolumeFie(t(1));
 T0      = 273;
-p0      = 3.5*10^5; 
+p0      = 3.5*10^5;                                             %might need to be adjusted because of looad change
 Sp_avg = 2 * Stroke * omega / 2 / pi;
-pm = p0 * ((VDisp+Vc)/V)^gamma
-w1 = C1*Sp_avg;
-w2 = C2*(VDisp*T0)/(p0*V0)*(p-pm);
-
-C=3.26;
+ratio = 1 + VDisp/Vc;
+pm = ((VDisp+Vc)/(V))^gamma * p0;      
+w = C1 * Sp_avg + C2 * (VDisp*T0)/(p0*V0) * (p-pm)/1000;       
+if (p-pm)<0
+    w = 0;
+end
+alpha=3.26;
 macht=0.8;
+hc_tot = alpha * Bore^(macht-1) * (p/1000)^macht * (w)^macht * T^(0.75-1.62*macht)
 
-alpha = C * Bore^(macht-1) * (p/1000)^macht * (w1+w2)^macht * T^(0.75-1.62*macht)
 
-dQhl        = alfa*(A_c*(Twall-T)+A_p*(Twall-T));
+% %Heat loss HCCI engines, due to new paper given by Somers
+% macht_HCCI = 0.8
+% alpha_HCCI = 3.26 %? Or 0.34?
+% 
+% w_HCCI = C1 * Sp_avg + C2/6 * (VDisp*T0)/(p0*V0) * (p-pm)/1000    %adjusted woschni because new HCCI paper canvas, again unsure about pm
+% if (p-pm2)<0
+%     w_HCCI = 0;
+% end
+% hc_tot_HCCI = alpha_HCCI * ? * (p/1000)^macht_HCCI * (w2)^macht_HCCI * T^(0.73)          %adjusted alpha because new HCCI paper canvas
+% 
+% 
+% dQhl        = hc_tot*(A_c*(Twall-T)+A_p*(Twall-T));
 
 %% DAE formulation
 Rg = StateCyl.Rg;
