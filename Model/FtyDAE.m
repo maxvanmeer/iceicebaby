@@ -2,7 +2,8 @@ function [yp] = FtyDAE( t,y )
 global Int Exh QLHV SpS Runiv omega
 global GaussatCA50  mfuIVCClose si EtaComb Bore Stroke Omega rc
 
-Twall   = 273+80;
+Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny. 
+Tpiston = 273+110;  %110 degrees Celsius is a guess, based on the normal temperature of engine oil (which cools the pistons). NOT SURE.
 alfa    = 500;
 
 VDisp   = pi*(Bore/2)^2*Stroke;
@@ -21,7 +22,7 @@ m = sum(mi);
 Yi = [mi/m]';
 %%
 Ca          = time2ang(t,omega)/(2*pi)*360;
-reducedCa   = mod(Ca+360,720)-360
+reducedCa   = mod(Ca+360,720)-360;
 CADS        = omega/(2*pi)*360;
 %%
 for ii=1:Nsp
@@ -123,27 +124,31 @@ p0      = 3.5*10^5;                                             %might need to b
 Sp_avg = 2 * Stroke * omega / 2 / pi;
 ratio = 1 + VDisp/Vc;
 pm = ((VDisp+Vc)/(V))^gamma * p0;      
-w = C1 * Sp_avg + C2 * (VDisp*T0)/(p0*V0) * (p-pm)/1000;       
+w = C1 * Sp_avg + C2 * (VDisp*T0)/(p0*V0) * (p-pm)/1000       
 if (p-pm)<0
     w = 0;
 end
 alpha=3.26;
 macht=0.8;
-hc_tot = alpha * Bore^(macht-1) * (p/1000)^macht * (w)^macht * T^(0.75-1.62*macht)
+hc_tot = alpha * Bore^(macht-1) * (p/1000)^macht * (w)^macht * T^(0.75-1.62*macht);
 
 
-% %Heat loss HCCI engines, due to new paper given by Somers
-% macht_HCCI = 0.8
-% alpha_HCCI = 3.26 %? Or 0.34?
+%Heat loss HCCI engines, due to new paper given by Somers
+% macht_HCCI = 0.8;
+% alpha_HCCI = 3.26; %? Or 0.34? (no idea, not clear in paper)
+% PistonArea  = pi*(Bore/2)^2;
+% L_HCCI = V/PistonArea;
+% C1_HCCI = C1; %Assumption C1 and C2 values are equal. All papers have different opinions about these values.
+% C2_HCCI = C2;
 % 
-% w_HCCI = C1 * Sp_avg + C2/6 * (VDisp*T0)/(p0*V0) * (p-pm)/1000    %adjusted woschni because new HCCI paper canvas, again unsure about pm
-% if (p-pm2)<0
+% w_HCCI = C1_HCCI * Sp_avg + C2_HCCI/6 * (VDisp*T0)/(p0*V0) * (p-pm)/1000    %adjusted woschni, values seem more correct (smaller)
+% if (p-pm)<0
 %     w_HCCI = 0;
 % end
-% hc_tot_HCCI = alpha_HCCI * ? * (p/1000)^macht_HCCI * (w2)^macht_HCCI * T^(0.73)          %adjusted alpha because new HCCI paper canvas
+% hc_tot_HCCI = alpha_HCCI * L_HCCI^(macht-1) * (p/1000)^macht_HCCI * (w_HCCI)^macht_HCCI * T^(0.73);          %adjusted alpha because new HCCI paper canvas
 % 
 % 
-% dQhl        = hc_tot*(A_c*(Twall-T)+A_p*(Twall-T));
+% dQhl        = hc_tot_HCCI*(A_c*(Twall-T)+A_p*(Tpiston-T));
 
 %% DAE formulation
 Rg = StateCyl.Rg;
