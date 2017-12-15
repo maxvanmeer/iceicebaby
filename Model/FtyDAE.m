@@ -1,9 +1,14 @@
 function [yp] = FtyDAE( t,y )
 global Int Exh QLHV SpS Runiv omega
-global GaussatCA50  mfuIVCClose si EtaComb
+global GaussatCA50  mfuIVCClose si EtaComb Bore Stroke Omega rc
 
-Twall   = 273+80;
+Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny. 
+Tpiston = 273+110;  %110 degrees Celsius is a guess, based on the normal temperature of engine oil (which cools the pistons). NOT SURE.
 alfa    = 500;
+
+VDisp   = pi*(Bore/2)^2*Stroke;
+Vc      = VDisp/(rc-1);
+
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
 Mi = [SpS.Mass];Nsp = length(Mi);
@@ -13,7 +18,7 @@ pE=Exh.p;TE=Exh.T;
 %%
 p=y(1);T=y(2);mi=y(3:end); %Note that p and T are swapped compared to the slides
 m = sum(mi);
-[V,dVdt,A]=CylVolumeFie(t);
+[V,dVdt,A,A_c,A_p]=CylVolumeFie(t);
 Yi = [mi/m]';
 %%
 Ca          = time2ang(t,omega)/(2*pi)*360;
@@ -93,7 +98,58 @@ dmidt_c     = si'*dmfuComb;
 dmidt       = dmidt - dmidt_c;
 dQcomb      = QLHV*dmfuComb;
 dQcomb_real = ei*dmidt_c;
-dQhl        = alfa*A*(Twall-T);
+
+%% Woshni heatloss
+%normal model
+CA50=10;                        % CA50 (50% HR), replace with 
+BDUR=20;                        % Burn Duration, replace with data case
+CAign = CA50-0.5*BDUR;
+CAend = CAign+BDUR;
+
+%for the intake/exhaust Ca, look at 'valvedata.mat'
+if reducedCa >= CAign && reducedCa <= CAend         %combustion phase
+    C1 = 2.28;
+    C2 = 3.24*10-3;
+elseif (reducedCa >= -360 && reducedCa <= -108) || (reducedCa >= 91 && reducedCa <= 360)      %Intake/Exhaust phase
+    C1 = 6.18;
+    C2 = 0;
+else
+    C1 = 2.28;
+    C2 = 0;
+end
+
+V0      = CylVolumeFie(t(1));
+T0      = 273;
+p0      = 3.5*10^5;                                             %might need to be adjusted because of looad change
+Sp_avg = 2 * Stroke * omega / 2 / pi;
+ratio = 1 + VDisp/Vc;
+pm = ((VDisp+Vc)/(V))^gamma * p0;      
+w = C1 * Sp_avg + C2 * (VDisp*T0)/(p0*V0) * (p-pm)/1000       
+if (p-pm)<0
+    w = 0;
+end
+alpha=3.26;
+macht=0.8;
+hc_tot = alpha * Bore^(macht-1) * (p/1000)^macht * (w)^macht * T^(0.75-1.62*macht);
+
+
+%Heat loss HCCI engines, due to new paper given by Somers
+% macht_HCCI = 0.8;
+% alpha_HCCI = 3.26; %? Or 0.34? (no idea, not clear in paper)
+% PistonArea  = pi*(Bore/2)^2;
+% L_HCCI = V/PistonArea;
+% C1_HCCI = C1; %Assumption C1 and C2 values are equal. All papers have different opinions about these values.
+% C2_HCCI = C2;
+% 
+% w_HCCI = C1_HCCI * Sp_avg + C2_HCCI/6 * (VDisp*T0)/(p0*V0) * (p-pm)/1000    %adjusted woschni, values seem more correct (smaller)
+% if (p-pm)<0
+%     w_HCCI = 0;
+% end
+% hc_tot_HCCI = alpha_HCCI * L_HCCI^(macht-1) * (p/1000)^macht_HCCI * (w_HCCI)^macht_HCCI * T^(0.73);          %adjusted alpha because new HCCI paper canvas
+% 
+% 
+% dQhl        = hc_tot_HCCI*(A_c*(Twall-T)+A_p*(Tpiston-T));
+
 %% DAE formulation
 Rg = StateCyl.Rg;
 yp = [dQhl-p*dVdt+hpaI*dmdtI+hpaE*dmdtE;

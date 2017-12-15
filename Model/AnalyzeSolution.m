@@ -1,4 +1,4 @@
-clear all;close all;clc;
+clear all;clc; %close all;
 %%
 %% Add path to general functions and set Runiv
 addpath('General');
@@ -26,9 +26,6 @@ t=time;p = y(:,1);T=y(:,2);mi=y(:,iSpSel);
 RPM = Settings.N;
 REVS = RPM/60;trev = 1/REVS;nREVS = (t(end)-t(1))/trev; 
 it = find(t > (nREVS-2)*trev & t <= nREVS*trev);
-
-
-
 
 % Select a cycle
 for i = 1:nREVS/2
