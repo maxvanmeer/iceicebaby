@@ -14,7 +14,7 @@ mm=1e-3;cm=1e-2;dm=0.1;
 J = 1/(3.6e6);
 liter = dm^3;
 %%
-iCase = 122;                                                                 %1 for standard, 2 for adjusted
+iCase = 128;                                                                 %1 for standard, 2 for adjusted
 CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
 SaveName = fullfile(DataDir,CaseName);
 load(SaveName);
@@ -29,11 +29,11 @@ it = find(t > (nREVS-2)*trev & t <= nREVS*trev);
 
 
 % Select a cycle
-% for i = 1:nREVS/2
-%     iti = find(t > (2*(i-1))*trev & t <= (2*i)*trev);
-%     %it_all(:,i) = iti;
-%     it_all  = 1:360;
-% end
+i_per_cycle = length(t)/(nREVS/2);
+ for i = 1:nREVS/2
+     iti = ceil((i-1)*i_per_cycle+1e-1:1:i*i_per_cycle);
+     it_all(:,i) = iti;
+ end
 
 % Select a cycle
 % for i = 1:nREVS/2
@@ -48,8 +48,8 @@ pp = p(it);
 Tp = T(it);
 mip = mi(it,:);
 
-% tp_all = t(it_all);
-% pp_all = p(it_all);
+ tp_all = t(it_all);
+ pp_all = p(it_all);
 
 
 figure(1)
@@ -66,7 +66,7 @@ legend(yNames{iSpSel});
 %% pV diagram
 figure(2)
 Vp = V(it);
-% Vp_all = V(it_all);
+Vp_all = V(it_all);
 VDisp = max(V) - min(V);
 
 i=1;
@@ -106,10 +106,10 @@ W   = trapz(Vp,pp); % Work, integral pdV
 Wcomp_exp = trapz(Vcomp_exp,pcomp_exp);
 W_pumploop = trapz(V_pumploop, p_pumploop);
 
-% 
-% for i = 1:size(it_all,2)
-%     W_all(1,i) = trapz(Vp_all(:,i),pp_all(:,i));
-% end
+
+for i = 1:size(it_all,2)
+    W_all(1,i) = trapz(Vp_all(:,i),pp_all(:,i));
+end
 
 
 dummy = find(t > (nREVS-1.25)*trev); % I guess this is after IVC and before combustion. There are better ways.
@@ -124,9 +124,9 @@ QLHV = Comb.QLHV;
 Qin = mfuel*QLHV;
 eff = W/Qin
 %% Torque for 6 cyclinders
-% T_all = W_all/(2*pi*(nREVS/Settings.Ncyc));
-% T_mean = sum(T_all)/(Settings.Ncyc);
-% T_V6 = 6*T_mean;
+T_all = W_all/(2*pi*(nREVS/Settings.Ncyc));
+T_mean = sum(T_all)/(Settings.Ncyc);
+T_V6 = 6*T_mean;
 
 bsfc = mfuel/W*1000/J
 IMEP_net = W/VDisp % [Pa]
