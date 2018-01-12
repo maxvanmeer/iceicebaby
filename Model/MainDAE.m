@@ -6,13 +6,13 @@ addpath('General');
 global Runiv SpS QLHV
 Runiv = 8.3144598;
 %% Datadir just to show how you can organize output
-DataDir = 'output';
+DataDir = 'C:\Users\s153361\OneDrive\Documents\MATLAB\PowertrainsGithub\Model\output';
 
 %% Engine Parameters
 global iCase
 iCase = input('Select your loadcase (122 t/m 131))');
-CaseName = ['cases.mat'];
-load(CaseName);
+load('cases.mat');
+
 %% Units, for convenience only
 g=1e-3;
 ms=1e-3; 
@@ -40,8 +40,8 @@ Tparts = [400 475 630 415 840];
 %% Intake and exhaust pressures
 p_plenum  = allCases(iCase-121).p_plenum*bara;               % plenum pressure
 T_plenum  = allCases(iCase-121).T_plenum;                    % plenum temperature
-p_exhaust = p_plenum+0.1*bara;      % exhaust back-pressure
-T_exhaust  = 400;                   % plenum temperature
+p_exhaust = p_plenum+0.1*bara;                               % exhaust back-pressure
+T_exhaust  = 400;                                            % plenum temperature
 
 %% Geometric and timing data of the valves
 filenameValveData=fullfile('General','Valvedata.mat');
@@ -76,6 +76,7 @@ REVS    = N/60;
 omega   = REVS*2*pi;
 tcyc    = (2/REVS);
 t       = [0:0.1:360]./360*tcyc*Ncyc;
+CADS        = omega/(2*pi)*360;
 %% Compute initial conditions and intake/exhaust composition
 V0      = CylVolumeFie(t(1));
 T0      = 273;
@@ -118,6 +119,7 @@ for i=3:3+length(Names)-1
     yNames{i}=char(Names(i-2));
 end
 mfuIVCClose     = y0(3);
+
 %% Solving the DAE system
 tspan=t;
 odopt=odeset('RelTol',1e-4,'Mass',@MassDAE,'MassSingular','yes');           % Set solver settings (it is a DAE so ...,'MassSingular','yes')
@@ -125,6 +127,17 @@ tic;
 [time,y]=ode15s(@FtyDAE,tspan,y0,odopt);                                    % Take a specific solver
 tel=toc;
 fprintf('Spent time %9.2f (solver %s)\n',tel,'ode15s');
+
+%% Computing Heat release rate (yet again)
+ReducedCA = 0:360;
+dQcomb = QLHV*EtaComb*CADS*mfuIVCClose*wiebefunctions(ReducedCA);
+for i = 1:length(dQcomb)
+    HR(i) = trapz(dQcomb(1:ReducedCA(i)));
+end
+CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat ReducedCA van 0 tot 360 loopt en HR van 1 tot 360
+CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
+CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
+HeatGenerated = (N/60)*HR(length(HR));
 %% Specify SaveName
 CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
 SaveName = fullfile(DataDir,CaseName);

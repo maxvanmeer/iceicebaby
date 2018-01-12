@@ -14,7 +14,7 @@ mm=1e-3;cm=1e-2;dm=0.1;
 J = 1/(3.6e6);
 liter = dm^3;
 %%
-iCase = 122;                                                                  %1 for standard, 2 for adjusted
+iCase = 131;                                                                  %1 for standard, 2 for adjusted
 CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
 SaveName = fullfile(DataDir,CaseName);
 load(SaveName);
@@ -33,8 +33,8 @@ it = find(t > (nREVS-2)*trev & t <= nREVS*trev);
 % Select a cycle
 for i = 1:nREVS/2
     iti = find(t > (2*(i-1))*trev & t <= (2*i)*trev);
-    it_all(:,i) = iti;
-    i
+    %it_all(:,i) = iti;
+    it_all  = 1:360;
 end
 
 [value, i_comp] = min(abs(V(it)));

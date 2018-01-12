@@ -1,6 +1,6 @@
-function [yp] = FtyDAE( t,y )
+function [yp,dmfuComb] = FtyDAE( t,y )
 global Int Exh QLHV SpS Runiv omega
-global GaussatCA50  mfuIVCClose si EtaComb
+global GaussatCA50 mfuIVCClose si EtaComb
 
 Twall   = 273+80;
 alfa    = 500;
@@ -89,7 +89,8 @@ else
 end
 dmidt       = [YI*dmdtI + YE*dmdtE]';
 %dmfuComb    = EtaComb*mfuIVCClose*pdf(GaussatCA50,reducedCa)*CADS;
-dmfuComb    = EtaComb*mfuIVCClose*wiebefunctions(reducedCa)*CADS;
+HRR = wiebefunctions(reducedCa);
+dmfuComb    = EtaComb*mfuIVCClose*HRR*CADS;
 dmidt_c     = si'*dmfuComb;
 dmidt       = dmidt - dmidt_c;
 dQcomb      = QLHV*dmfuComb;
