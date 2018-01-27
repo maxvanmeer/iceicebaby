@@ -14,7 +14,7 @@ mm=1e-3;cm=1e-2;dm=0.1;
 J = 1/(3.6e6);
 liter = dm^3;
 %%
-iCase = 128;                                                                 %1 for standard, 2 for adjusted
+iCase = 124;                                                                 %1 for standard, 2 for adjusted
 CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
 SaveName = fullfile(DataDir,CaseName);
 load(SaveName);
@@ -126,7 +126,7 @@ eff = W/Qin
 %% Torque for 6 cyclinders
 T_all = W_all/(2*pi*(nREVS/Settings.Ncyc));
 T_mean = sum(T_all)/(Settings.Ncyc);
-T_V6 = 6*T_mean;
+T_V6 = 6*T_mean
 
 bsfc = mfuel/W*1000/J
 IMEP_net = W/VDisp % [Pa]
