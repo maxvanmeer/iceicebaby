@@ -1,4 +1,4 @@
-clear all;close all;clc;
+clear all;clc; %close all;
 %%
 %% Add path to general functions and set Runiv
 addpath('General');
