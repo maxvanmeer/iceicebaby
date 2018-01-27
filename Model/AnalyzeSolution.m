@@ -131,7 +131,9 @@ T_V6 = 6*T_mean;
 bsfc = mfuel/W*1000/J
 IMEP_net = W/VDisp % [Pa]
 IMEP_gross = Wcomp_exp/VDisp
-PMEP = W_pumploop/VDisp
+PMEP = -W_pumploop/VDisp  % (= IMEP_gross - IMEP_net)
+BMEP = (2*pi*(nREVS/Settings.Ncyc)*T_mean)/VDisp
+FMEP = IMEP_gross - BMEP
 
 
 
