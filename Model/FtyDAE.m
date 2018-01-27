@@ -1,6 +1,6 @@
 function [yp] = FtyDAE( t,y )
 global Int Exh QLHV SpS Runiv omega SOC EOC
-global GaussatCA50  mfuIVCClose si EtaComb Bore Stroke rc VDisp
+global GaussatCA50  mfuIVCClose si EtaComb rc VDisp
 
 Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny. 
 Tpiston = 273+110;  %110 degrees Celsius is a guess, based on the normal temperature of engine oil (which cools the pistons). NOT SURE.

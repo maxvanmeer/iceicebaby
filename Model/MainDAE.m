@@ -32,6 +32,7 @@ Stroke  = 158*mm;                   % stroke
 Bore    = 130*mm;                   % bore
 rc      = 17.45;                    % compression ratio
 N       = allCases(iCase-121).RPM_act;          % RPM
+VDisp   = pi*(Bore/2)^2*Stroke;     % Displacement Volume
 Cyl.LCon = LCon;Cyl.Stroke=Stroke;Cyl.Bore=Bore;Cyl.rc=rc;
 
 %% Simple combustion model settings (a gaussian distribution)

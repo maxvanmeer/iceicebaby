@@ -18,3 +18,8 @@ w   = C1*Sp+C2*fac*(p-pm);
 if (p-pm)<0
     w = 0;
 end
+
+C = 3.26;
+m = 0.8;
+alfa = C*Bore^(m-1)*(p/1000)^m*w^m*T^(0.75-1.62*m);
+
