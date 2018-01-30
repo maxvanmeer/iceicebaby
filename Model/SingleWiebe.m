@@ -12,3 +12,4 @@ function [dY] = SingleWiebe(CA,a,n,dCA,CAI)
     EXPF=exp(EXPARG);
     dY = a*n/dCA*(PF.*EXPF);
 end
+
