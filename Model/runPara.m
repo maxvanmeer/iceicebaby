@@ -2,12 +2,18 @@ clc
 clear
 close all
 
-RPM = linspace(500,2250,5);
-T = linspace(50,2250,4);
+N_sim = 10;
+
+RPM = linspace(550,2150,N_sim);
+T = linspace(100,2650,N_sim);
+
+line1 = 1100+((2600-1400)/400).*(RPM-700);
+line2=1e10;line3=1e10;
+wrongIndices = find(T>line1);
 
 omega = 2*pi*RPM/60;
 
-% Run parametrized cases
+%% Run parametrized cases
 n=1;
 for i=1:length(omega)
     for j=1:length(T)

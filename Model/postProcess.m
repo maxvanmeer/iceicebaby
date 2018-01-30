@@ -6,9 +6,16 @@ close all
 
 load('paramInput.mat');
 
+
+
 n=length(T_input);
 
+line1 = 1100+((2600-1400)/400).*(RPM_input-700);
+line2=1e10;line3=1e10;
+wrongIndices = find(T_input>line1);
 
+% RPM_input(wrongIndices)=[];
+% T_input(wrongIndices)=[];
 
 for i = 1:n
     myCase(i) = load(['output/paramCase',num2str(i,'%3.3i'),'.mat']);
@@ -54,7 +61,7 @@ mesh(RPMq,Tq,q);
 xlabel('RPM [-]');
 ylabel('Torque [Nm]');
 title('Efficiency map');
-cc=colorbar
+cc=colorbar;
 grid
 set(cc, 'Fontsize', 20)
 set(gca,'FontSize',20)
