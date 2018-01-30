@@ -1,12 +1,25 @@
-clear all
-close all
-clc
+function MainDAE(iCase)
+defaultCase = 122; % In case you want to run this file directly
+
+if (~exist('iCase','var'))
+   iCase = defaultCase; 
+end
+
+disp(['Running case ',num2str(iCase),'...']);
+
+
+
 %% Add path to general functions and set Runiv
 addpath('General');
 global Runiv SpS QLHV
 Runiv = 8.3144598;
 %% Datadir just to show how you can organize output
 DataDir = 'output';
+%% Engine Parameters
+% global iCase
+% iCase = input('Select your loadcase (122 t/m 131))');
+CaseName = ['cases.mat'];
+load(CaseName);
 %% Units, for convenience only
 g=1e-3;
 ms=1e-3; 
@@ -19,23 +32,25 @@ LCon    = 261.6*mm;                 % connecting rod length
 Stroke  = 158*mm;                   % stroke
 Bore    = 130*mm;                   % bore
 rc      = 17.45;                    % compression ratio
-N       = 2000;                     % RPM
+N       = allCases(iCase-121).RPM_act;          % RPM
 Cyl.LCon = LCon;Cyl.Stroke=Stroke;Cyl.Bore=Bore;Cyl.rc=rc;
+
 %% Simple combustion model settings (a gaussian distribution)
 global GaussatCA50 mfuIVCClose si EtaComb
-CA50=10;                        % CA50 (50% HR)
-BDUR=20;                        % Burn Duration
-GaussatCA50  = gmdistribution(CA50,BDUR,1);
 EtaComb = 0.99;                 % Combustion efficiency
-Comb.Shape  = GaussatCA50;
-Comb.eta    = EtaComb;
-Tparts = [400 475 630 415 840]; 
-%% Intake and exhaust pressures
-p_plenum  = 3.5*bara;               % plenum pressure
-T_plenum  = 300;                    % plenum temperature
-p_exhaust = p_plenum+0.1*bara;      % exhaust back-pressure
-T_exhaust  = 400;                   % plenum temperature
 
+%% Intake and exhaust pressures
+p_plenum  = allCases(iCase-121).p_plenum*bara;               % plenum pressure
+T_plenum  = allCases(iCase-121).T_plenum;                    % plenum temperature
+p_exhaust = p_plenum+0.1*bara;                               % exhaust back-pressure
+T_exhaust  = 400;                                            % plenum temperature
+f = allCases(iCase-121).f;
+a = allCases(iCase-121).a;
+n = allCases(iCase-121).n;
+dCA = allCases(iCase-121).dCA;
+CAign = allCases(iCase-121).CAign;
+
+save('currentCase','p_plenum','T_plenum','p_exhaust','T_exhaust','f','a','n','dCA','CAign')
 %% Geometric and timing data of the valves
 filenameValveData=fullfile('General','Valvedata.mat');
 load(filenameValveData);
@@ -64,18 +79,19 @@ si      = nui.*Mi/Mi(1);                                        % Reaction stoic
 AFstoi_molar  = nui(2)+nui(2)*Xair(3)/Xair(2);                  % So-called stoichiometric air fuel ratio (fuel property for given air composition), sometimes students use this as AFstoi.
 AFstoi  = si(2)+si(2)*Yair(3)/Yair(2);                          % So-called stoichiometric air fuel ratio (fuel property for given air composition)
 %% Set simulation time
-Ncyc    = 10;
+Ncyc    = 20;
 REVS    = N/60;
 omega   = REVS*2*pi;
 tcyc    = (2/REVS);
 t       = [0:0.1:360]./360*tcyc*Ncyc;
+CADS        = omega/(2*pi)*360;
 %% Compute initial conditions and intake/exhaust composition
 V0      = CylVolumeFie(t(1));
 T0      = 273;
 p0      = 3.5*bara;                                             % Typical full load set point
-lambda  = 1.6;                                                  
+lambda  = allCases(iCase-121).lambda_AF;                                                  
 AF      = AFstoi*lambda;                                        % Real AF ratio
-EGRf    = 0.15;                                                 % EGR fraction (mass based)
+EGRf    = allCases(iCase-121).EGRf/100;                                                 % EGR fraction (mass based)
 fracfu  = 1/(AF+1);
 fracair = 1 - fracfu;
 YReactants = fracfu*Yfuel + fracair*Yair;                       % Composition vector
@@ -105,13 +121,28 @@ Settings.EGR    = EGRf;
 Settings.AF     = AF;
 Settings.Ncyc   = Ncyc;                                                     %Added info about the number of cycles
 %% Set initial solution (it is an DAE problem so we must initialize)
-iCase = 1;                                                                  % v2 --> adjusted version. The non-adjusted version is 1. 
+%iCase = 1;                                                                  % v2 --> adjusted version. The non-adjusted version is 1. 
 y0(1)=p0;y0(2)=T0;y0(3:3+Nsp-1) = mass*[Int.Y];
 yNames={'p','T','','','','',''};
 for i=3:3+length(Names)-1
     yNames{i}=char(Names(i-2));
 end
 mfuIVCClose     = y0(3);
+%% Computing CA values
+global CA05 CA10 CA50 CA90 CA95 BDUR
+ReducedCA = -360:360;
+HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA,iCase);
+for i = 1:length(HRR)
+    %HR(i) = trapz(HRR(1:ReducedCA(i)));
+    HR(i) = trapz(HRR(1:i));
+end
+CA05 = ReducedCA(find(HR>0.05*HR(length(HR)),1)+1);
+CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat ReducedCA van 0 tot 360 loopt en HR van 1 tot 360
+CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
+CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
+CA95 = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1);
+BDUR = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1) - ReducedCA(find(HR>0.01*HR(length(HR)),1)+1);
+
 %% Solving the DAE system
 tspan=t;
 odopt=odeset('RelTol',1e-4,'Mass',@MassDAE,'MassSingular','yes');           % Set solver settings (it is a DAE so ...,'MassSingular','yes')
@@ -119,9 +150,12 @@ tic;
 [time,y]=ode15s(@FtyDAE,tspan,y0,odopt);                                    % Take a specific solver
 tel=toc;
 fprintf('Spent time %9.2f (solver %s)\n',tel,'ode15s');
+
+
 %% Specify SaveName
 CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
 SaveName = fullfile(DataDir,CaseName);
 V = CylVolumeFie(time);
-save(SaveName,'Settings','Cyl','Int','Exh','Comb','time','y','yNames','V','SpS');
+save(SaveName,'Settings','Cyl','Int','Exh','Comb','time','y','yNames','V','SpS','HRR','CA10','CA50','CA90','BDUR');
 fprintf('Saved solution of Case %3i to %s\n',iCase,SaveName);
+end

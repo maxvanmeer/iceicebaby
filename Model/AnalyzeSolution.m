@@ -1,4 +1,4 @@
-clear all;clc; %close all;
+clear all;close all;clc;
 %%
 %% Add path to general functions and set Runiv
 addpath('General');
@@ -14,7 +14,7 @@ mm=1e-3;cm=1e-2;dm=0.1;
 J = 1/(3.6e6);
 liter = dm^3;
 %%
-iCase = 2;                                                                  %1 for standard, 2 for adjusted
+iCase =  input('Select your loadcase (122 t/m 131): ');;                                                                 %1 for standard, 2 for adjusted
 CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
 SaveName = fullfile(DataDir,CaseName);
 load(SaveName);
@@ -27,11 +27,19 @@ RPM = Settings.N;
 REVS = RPM/60;trev = 1/REVS;nREVS = (t(end)-t(1))/trev; 
 it = find(t > (nREVS-2)*trev & t <= nREVS*trev);
 
+
 % Select a cycle
-for i = 1:nREVS/2
-    iti = find(t > (2*(i-1))*trev & t <= (2*i)*trev);
-    it_all(:,i) = iti;
-end
+i_per_cycle = length(t)/(nREVS/2);
+ for i = 1:nREVS/2
+     iti = ceil((i-1)*i_per_cycle+1e-1:1:i*i_per_cycle);
+     it_all(:,i) = iti;
+ end
+
+% Select a cycle
+% for i = 1:nREVS/2
+%     iti = find(t > (2*(i-1))*trev & t <= (2*i)*trev);
+%     it_all(:,i) = iti;
+% end
 
 [value, i_comp] = min(abs(V(it)));
 
@@ -40,8 +48,8 @@ pp = p(it);
 Tp = T(it);
 mip = mi(it,:);
 
-tp_all = t(it_all);
-pp_all = p(it_all);
+ tp_all = t(it_all);
+ pp_all = p(it_all);
 
 
 figure(1)
@@ -94,9 +102,9 @@ pl=loglog(V/liter,p/bara,'-',Vp/liter,pp/bara,'r-');
 set(pl(end),'LineWidth',2);
 xlabel('log V [l]');ylabel('log p [bara]');
 %% Computations
-W   = trapz(Vp,pp) % Work, integral pdV
-Wcomp_exp = trapz(Vcomp_exp,pcomp_exp)
-W_pumploop = trapz(V_pumploop, p_pumploop)
+W   = trapz(Vp,pp); % Work, integral pdV
+Wcomp_exp = trapz(Vcomp_exp,pcomp_exp);
+W_pumploop = trapz(V_pumploop, p_pumploop);
 
 
 for i = 1:size(it_all,2)
@@ -114,17 +122,36 @@ line(t(index)*[1 1]/ms,mfuel*[1 1]/g,'Marker','o','MarkerSize',8,'MarkerFaceColo
 tx=text(t(index)*[1 1]/ms,1.1*mfuel*[1 1]/g,'Selected fuel mass','Rotation',45);
 QLHV = Comb.QLHV;
 Qin = mfuel*QLHV;
-eff = W/Qin;
+eff(iCase-121) = W/Qin
+eff_all(iCase-121) = sum(W_all)/Settings.Ncyc/Qin;
+
 %% Torque for 6 cyclinders
 T_all = W_all/(2*pi*(nREVS/Settings.Ncyc));
 T_mean = sum(T_all)/(Settings.Ncyc);
-T_V6 = 6*T_mean;
+T_V6(iCase-121) = 6*T_mean;
 
-bsfc = mfuel/W*1000/J;
-IMEP_net = W/VDisp; % [Pa]
-IMEP_gross = Wcomp_exp/VDisp;
-PMEP = W_pumploop/VDisp;
+bsfc = mfuel/W*1000/J
+IMEP_net = W/VDisp % [Pa]
+IMEP_gross = Wcomp_exp/VDisp
+PMEP = -W_pumploop/VDisp  % (= IMEP_gross - IMEP_net)
+BMEP = (2*pi*(nREVS/Settings.Ncyc)*T_mean)/VDisp
+FMEP = IMEP_gross - BMEP
+
+%% Plotting heat release rate
+HRR_plot = HRR(350:420);
+CA = -360:360;
+CA_plot = 1:length(HRR_plot);
+
+figure(3)
+plot(CA,HRR)
+xlabel('Crankangle [Degrees]')
+ylabel('Heat release rate [J/degree]')
+title('Heat release rate')
+hold on
+plot(CA10,HRR(361+CA10),'r*');
+plot(CA50,HRR(361+CA50),'r*');
+plot(CA90,HRR(361+CA90),'r*');
 
 
 
-%implementing new efficiency here
+
