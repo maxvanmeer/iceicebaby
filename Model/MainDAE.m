@@ -18,9 +18,10 @@ if nargin == 0
 elseif nargin == 1 % Run a specific case
     iCase = varargin{1};
     
-elseif nargin ==2
+elseif nargin ==3
     T = varargin{1};
     w = varargin{2};
+    paramNumber = varargin{3};
     mode = 'couple';
     
 end
@@ -165,6 +166,8 @@ Int.T   = T_plenum;
 Exh.T   = T_exhaust;
 Int.Y   = (1-EGRf)*YReactants+EGRf*YProducts;                   % Applying EGR setpoint
 Exh.Y   = YProducts;
+Int.T   = T_plenum;
+Exh.T   = T_exhaust;
 for ii=1:Nsp
     Int.h(ii)   = HNasa(Int.T,SpS(ii));
     Int.e(ii)   = ENasa(Int.T,SpS(ii));
@@ -231,7 +234,15 @@ CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat Re
 CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
 CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
 %% Specify SaveName
-CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
+if strcmp(mode,'case')
+    CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
+
+elseif strcmp(mode,'couple')
+    CaseName = ['paramCase' num2str(paramNumber,'%3.3i') '.mat'];
+
+end
+
+
 SaveName = fullfile(DataDir,CaseName);
 V = CylVolumeFie(time);
 save(SaveName,'Settings','Cyl','Int','Exh','Comb','time','y','yNames','V','SpS');
