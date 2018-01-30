@@ -10,8 +10,10 @@ load('paramInput.mat');
 
 
 line1 = 1100+((2600-1400)/400).*(RPM_input-700);
-line2=1e10;line3=1e10;
-wrongIndices = find(T_input>line1);
+line2=2600;
+line3=1350+((1350-2850)/1000).*(RPM_input-2200);
+line4=1050+((1050-2575)/600).*(RPM_input-2200);
+wrongIndices = find(T_input>line1 | T_input>line2 | T_input>line3 | T_input>line4);
 
 RPM_input(wrongIndices)=[];
 T_input(wrongIndices)=[];

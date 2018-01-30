@@ -2,10 +2,10 @@ clc
 clear
 close all
 
-N_sim = 10;
+N_sim = 10; % Square this for total amount
 
 RPM = linspace(550,2150,N_sim);
-T = linspace(100,2650,N_sim);
+T = linspace(100,2599,N_sim);
 
 line1 = 1100+((2600-1400)/400).*(RPM-700);
 line2=1e10;line3=1e10;
