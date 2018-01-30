@@ -12,7 +12,6 @@ function MainDAE(varargin)
 mode = 'case';
 defaultCase = 124; % In case you want to run this file directly
 
-
 if nargin == 0
     iCase = defaultCase;
     
@@ -58,11 +57,13 @@ bara=1e5;
 mm=1e-3;cm=1e-2;dm=0.1;
 liter = dm^3;
 %% Set a few global variables
-global rc LCon Stroke Bore N omega Di De  % Engine globals
+global rc LCon Stroke Bore N omega Di De VDisp  % Engine globals
 LCon    = 261.6*mm;                 % connecting rod length
 Stroke  = 158*mm;                   % stroke
 Bore    = 130*mm;                   % bore
 rc      = 17.45;                    % compression ratio
+N       = allCases(iCase-121).RPM_act;          % RPM
+VDisp   = pi*(Bore/2)^2*Stroke;     % Displacement Volume
 if strcmp(mode,'case')
     N       = allCases(iCase-121).RPM_act;          % RPM
 elseif strcmp(mode,'couple')
@@ -137,20 +138,17 @@ if strcmp(mode,'case')
     AF      = AFstoi*lambda;
     EGRf = allCases(iCase-121).EGRf/100;
 elseif strcmp(mode,'couple')
-    %WAT IS QLHV?????
+    %WAT IS QLHV????? Mogelijke oplossing gevonden maar vreemd. (zie
+    %wiebetest)
     QLHV=4.26e7;
-    mfuel = 2*2*pi*T/(0.46*QLHV)+0.00011;
-    mair = 10.8e-3 + 28.4e-3 *T/2700;
+    mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011)/6;
+    mair = (10.8e-3 + 28.4e-3 *T/2700)/6;
     AF = mair/mfuel;
     
     EGR = 20;
     EGRf = EGR/100;
-    Vd   = 6*pi*(Bore/2)^2*Stroke; % Displacement volume for 6 cylinders
-    
-    rho = (1+EGR/100)*mair/Vd;
-    
-    
-    
+    Vd   = pi*(Bore/2)^2*Stroke; % Displacement volume for 6 cylinders
+    rho = (1+EGRf)*mair/Vd;    
 end
 % Real AF ratio
 
@@ -164,7 +162,8 @@ end
 QLHV = (hi*YReactants'-hi*YProducts')/YReactants(1);            % Classical definition of lower heating value. Just for reference not used!
 Comb.QLHV    = QLHV;
 
-
+Int.T   = T_plenum;
+Exh.T   = T_exhaust;
 Int.Y   = (1-EGRf)*YReactants+EGRf*YProducts;                   % Applying EGR setpoint
 Exh.Y   = YProducts;
 Int.T   = T_plenum;

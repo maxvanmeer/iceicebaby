@@ -1,4 +1,4 @@
-clear all;close all;clc;
+clear all;clc; %close all;
 %%
 %% Add path to general functions and set Runiv
 addpath('General');
@@ -123,6 +123,8 @@ tx=text(t(index)*[1 1]/ms,1.1*mfuel*[1 1]/g,'Selected fuel mass','Rotation',45);
 QLHV = Comb.QLHV;
 Qin = mfuel*QLHV;
 eff = W/Qin
+eff_all = sum(W_all)/Settings.Ncyc/Qin;
+
 %% Torque for 6 cyclinders
 T_all = W_all/(2*pi*(nREVS/Settings.Ncyc));
 T_mean = sum(T_all)/(Settings.Ncyc);
@@ -131,8 +133,9 @@ T_V6 = 6*T_mean
 bsfc = mfuel/W*1000/J
 IMEP_net = W/VDisp % [Pa]
 IMEP_gross = Wcomp_exp/VDisp
-PMEP = W_pumploop/VDisp
-
+PMEP = -W_pumploop/VDisp  % (= IMEP_gross - IMEP_net)
+BMEP = (2*pi*(nREVS/Settings.Ncyc)*T_mean)/VDisp
+FMEP = IMEP_gross - BMEP
 
 
 %implementing new efficiency here

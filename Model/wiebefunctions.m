@@ -34,10 +34,7 @@ elseif strcmp(mode,'couple')
     INJ_dur = 0.5+3*T/2700;
     SOI = EOI-INJ_dur;
     
-    %ASSUMPTION: we use the plenum pressure/temp
-    %for the ignition delay
-%     Temp = currentCase.T_plenum;
-Temp = 1050;
+    Temp = 1050; %no argumentation
     p = currentCase.p_plenum;
     
     %Premix
