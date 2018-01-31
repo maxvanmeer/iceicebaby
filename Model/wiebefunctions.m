@@ -6,11 +6,7 @@ load('currentCase.mat');
 mode = currentCase.mode;
 
 %Per phase
-% f = [0.010 0.9  0.090];
-% a = [1.862 3.225 2.253];
-% n = [3 2 3];
-% dCA = [1.137 33.465 70.028];
-% CAI = [-1.954 -1.542 1.9];
+
 
 if strcmp(mode,'case')
     % Do wiebe with case data
@@ -30,55 +26,61 @@ elseif strcmp(mode,'couple')
     T = currentCase.T;
     w = currentCase.w;
     EGRf= currentCase.EGRf;
-    EOI = -2+18*T/2700;
-    INJ_dur = 0.5+3*T/2700;
-    SOI = EOI-INJ_dur;
+    EOIt = deg2rad(-2+18*T/2700)/w*1000;    %[ms]!!
+    INJ_durt = 0.5+3*T/2700;                %[ms]
+    SOIt = EOIt-INJ_durt;                   %[ms]
+    INJ_durd = rad2deg((INJ_durt/1000)*w);  %[CAD]
+    EOId = rad2deg((EOIt/1000)*w);          %[CAD]
+    SOId = rad2deg((SOIt/1000)*w);          %[CAD]
+    % Parameters needed for dP = pressure common rail? Can also be used to
+    % calculate QLHV if dP is assumed to be a certain value.
+    QLHV = 4.26e7;
+    mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011)/6;           %kg in one cylinder
+    Cd = 0.8;                                           %[-]
+    D_hole = 180e-6;                                    %[m]
+    A_holes = 7*(pi/4)*D_hole^2;                        %[m2]
+    rho_D = 0.810*10^3;                                 %[kg/m3]
+    m_rate = (mfuel)/(INJ_durt/1000);                   %[kg/s]
+    dP = ((m_rate)/(A_holes*Cd*sqrt(rho_D)))^2*10^-5;   %[bar]
+    ID_alt = (0.35 + 0.5*(sqrt(dP)-sqrt(2500))/25)^2;   %[ms]
+    %ID_alt is calculated by the formula used in the appendix of the
+    %studyguide. This method could be out of date but it does give a good
+    %indication.
     
-    Temp = 1050; %no argumentation
-    p = currentCase.p_plenum;
+    %Argumentation for using these values can be found in 'Proof_TSOI_PSOI'
+    Temp = 975;                         %[K]
+    p = 58.8;                           %[bar]
+    
     
     %Premix
     AP=0.405;
     nP=0.623;
     TaP=2977;
     mP=0.173;
-    IDtP = AP*p^(-nP)*exp(TaP/Temp)*EGRf^mP;
-    rtP = IDtP / INJ_dur;
-    CAignP = w*IDtP/1000; % ASSUMPTION: no angle offset needed
+    IDtP = AP*p^(-nP)*exp(TaP/Temp)*EGRf^mP; %[ms]
+    rt = IDtP / INJ_durt;   %[-]
+    CAignP = rad2deg((SOIt+IDtP)/1000*w); % [deg=CAD]
     
-    %Mix (apparently same values as premix)
-    AM=0.405;
-    nM=0.623;
-    TaM=2977;
-    mM=0.173;
-    IDtM = AM*p^(-nM)*exp(TaM/Temp)*EGRf^mM;
-    rtM = IDtM / INJ_dur;
-    CAignM = w*IDtM/1000; % ASSUMPTION: no angle offset needed
+    %Mix (same values as premix)
+    CAignM = rad2deg(w*(IDtP+SOIt)/1000); % [CAD] 
     
     %Late
     AL=0.237;
     nL=0.379;
     TaL=3289;
     mL=0.145;
-    IDtL = AL*p^(-nL)*exp(TaL/Temp)*EGRf^mL;
-    rtL = IDtL / INJ_dur;
-    CAignL = w*IDtL/1000; % ASSUMPTION: no angle offset needed
-
+    IDtL = AL*p^(-nL)*exp(TaL/Temp)*EGRf^mL; %[ms]
+    CAignL = rad2deg(w*(IDtL+SOIt)/1000); % [CAD] 
     
-    
-    %Calculate f
-    if rtP<0.8
-        fP=-0.0107+0.1684*rtP;
+    %Calculate fP and fM
+    if rt<0.8
+        fP=-0.0107+0.1684*rt;
+        fM=0.8793-0.3428*rt;
     else
-        fP=-0.566+0.7627*rtP;
+        fP=-0.566+0.7627*rt;
+        fM=1.0125-0.4228*rt;
     end
-    
-    if rtM < 0.8
-        fM=-0.0107+0.1684*rtM;
-    else
-        fM=1.0125-0.4228*rtP;
-    end
-    
+        
     %Calculate and clip fL
     fL = 1-fP-fM;
     if fL<0
@@ -87,34 +89,32 @@ elseif strcmp(mode,'couple')
         fL=0;
     end
     
-    %Calculate dCa
-    A_dCa=0.00405;
-    n_dCa=0.631;
-    Ta_dCa=6353.9;
-    m_dCa=0.216;
+    %Calculate dCA
+    A_dCA=0.00405;
+    n_dCA=0.631;
+    Ta_dCA=6353.9;
+    m_dCA=0.216;
     
-    dtP = A_dCa*p^(-n_dCa)*exp(Ta_dCa/Temp)*EGRf^m_dCa;
-    dCaP = dtP/1000*w; % ASSUMPTION: no angle offset needed
-    dCaM = -0.024*INJ_dur^2+1.1776*INJ_dur+10.7056;
-    dCaL = -0.0473*INJ_dur^2+2.105*INJ_dur+21.657;
+    dtP = A_dCA*p^(-n_dCA)*exp(Ta_dCA/Temp)*EGRf^m_dCA;
+    dCAP = rad2deg(dtP/1000*w); % [CAD]
+    dCAM = -0.024*INJ_durd^2+1.1776*INJ_durd+10.7056; %[CAD]
+    dCAL = -0.0473*INJ_durd^2+2.105*INJ_durd+21.657; %[CAD]
     
     %Calculate a, n
     aP = -0.534 *IDtP+1.878;
     nP_wiebe=3;
     
-    aM=0.0031*INJ_dur^2-0.226*INJ_dur+4.901;
+    aM=0.0031*INJ_durd^2-0.226*INJ_durd+4.901;
     nM_wiebe=2;
     
-    aL = exp(-0.135*INJ_dur+2.25);
+    lna = -0.135*INJ_durd+2.25;
+    aL = exp(lna);
     nL_wiebe=3;
     
-    Premix = SingleWiebe(CA,aP,nP_wiebe,dCaP,CAignP);
-    Mixing = SingleWiebe(CA,aM,nM_wiebe,dCaM,CAignM);
-    Late = SingleWiebe(CA,aL,nL_wiebe,dCaL,CAignL);
+    Premix = SingleWiebe(CA,aP,nP_wiebe,dCAP,CAignP);
+    Mixing = SingleWiebe(CA,aM,nM_wiebe,dCAM,CAignM);
+    Late = SingleWiebe(CA,aL,nL_wiebe,dCAL,CAignL);
     HRR = fP*Premix + fM*Mixing + fL*Late;
-    
-    fs=[fP,fM,fL];
-%     save('wiebe.mat','premix','mix','late','fs');
 end
 
 

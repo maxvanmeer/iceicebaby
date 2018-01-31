@@ -99,8 +99,12 @@ dQcomb_real = ei*dmidt_c;
 
 %% Woshni heatloss
 %normal model
-CA50=10;                        % CA50 (50% HR), replace with 
-BDUR=20;                        % Burn Duration, replace with data case
+% CA50=10;                        % CA50 (50% HR), replace with 
+CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat ReducedCA van 0 tot 360 loopt en HR van 1 tot 360
+CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
+CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
+% BDUR=20;                        % Burn Duration, replace with data case
+BDUR = CA90-CA10;
 CAign = CA50-0.5*BDUR;
 CAend = CAign+BDUR;
 SOC = CAign;

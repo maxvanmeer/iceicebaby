@@ -147,7 +147,7 @@ elseif strcmp(mode,'couple')
     
     EGR = 20;
     EGRf = EGR/100;
-    Vd   = pi*(Bore/2)^2*Stroke; % Displacement volume for 6 cylinders
+    Vd   = pi*(Bore/2)^2*Stroke; % Displacement volume for 1 cylinder
     rho = (1+EGRf)*mair/Vd;    
 end
 % Real AF ratio
@@ -227,6 +227,7 @@ fprintf('Spent time %9.2f (solver %s)\n',tel,'ode15s');
 %% Computing Heat release rate (yet again)
 ReducedCA = 0:360;
 HRR = EtaComb*mfuIVCClose*CADS*wiebefunctions(ReducedCA);
+
 for i = 1:length(HRR)
     HR(i) = trapz(HRR(1:ReducedCA(i)));
 end

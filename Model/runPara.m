@@ -2,7 +2,7 @@ clc
 clear
 close all
 
-N_sim = 10; % Square this for total amount
+N_sim = 4; % Square this for total amount
 
 RPM = linspace(550,2150,N_sim);
 T = linspace(100,2599,N_sim);
