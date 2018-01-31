@@ -78,9 +78,7 @@ CA50=10;                        % CA50 (50% HR)
 BDUR=20;                        % Burn Duration
 GaussatCA50  = gmdistribution(CA50,BDUR,1);
 EtaComb = 0.99;                 % Combustion efficiency
-Comb.Shape  = GaussatCA50;
-Comb.eta    = EtaComb;
-Tparts = [400 475 630 415 840];
+
 %% Intake and exhaust pressures
 
 if strcmp(mode,'case')
@@ -193,6 +191,30 @@ end
 Int.Ca=CaI;Int.L=LI;Int.D=Di;Int.p=p_plenum;
 Exh.Ca=CaE;Exh.L=LE;Exh.D=De;Exh.p=p_exhaust;
 
+
+
+%% Set initial solution (it is an DAE problem so we must initialize)
+y0(1)=p0;y0(2)=T0;y0(3:3+Nsp-1) = mass*[Int.Y];
+yNames={'p','T','','','','',''};
+for i=3:3+length(Names)-1
+    yNames{i}=char(Names(i-2));
+end
+mfuIVCClose     = y0(3);
+%% Computing CA values
+global CA05 CA10 CA50 CA90 CA95 BDUR
+ReducedCA = -360:360;
+HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA);
+for i = 1:length(HRR)
+    %HR(i) = trapz(HRR(1:ReducedCA(i)));
+    HR(i) = trapz(HRR(1:i));
+end
+CA05 = ReducedCA(find(HR>0.05*HR(length(HR)),1)+1);
+CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat ReducedCA van 0 tot 360 loopt en HR van 1 tot 360
+CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
+CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
+CA95 = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1);
+BDUR = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1) - ReducedCA(find(HR>0.01*HR(length(HR)),1)+1);
+
 %% Save current case to pass on to FtyDAE
 if strcmp(mode,'case')
     currentCase = allCases(iCase-121);
@@ -204,17 +226,11 @@ elseif strcmp(mode,'couple')
     currentCase.T_plenum=T_plenum;
     currentCase.w = w;
 end
+currentCase.HR = HR;
+
 currentCase.mode = mode;
 save('currentCase.mat','currentCase');
 
-
-%% Set initial solution (it is an DAE problem so we must initialize)
-y0(1)=p0;y0(2)=T0;y0(3:3+Nsp-1) = mass*[Int.Y];
-yNames={'p','T','','','','',''};
-for i=3:3+length(Names)-1
-    yNames{i}=char(Names(i-2));
-end
-mfuIVCClose     = y0(3);
 
 %% Solving the DAE system
 tspan=t;
@@ -224,16 +240,7 @@ tic;
 tel=toc;
 fprintf('Spent time %9.2f (solver %s)\n',tel,'ode15s');
 
-%% Computing Heat release rate (yet again)
-ReducedCA = 0:360;
-HRR = EtaComb*mfuIVCClose*CADS*wiebefunctions(ReducedCA);
 
-for i = 1:length(HRR)
-    HR(i) = trapz(HRR(1:ReducedCA(i)));
-end
-CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat ReducedCA van 0 tot 360 loopt en HR van 1 tot 360
-CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
-CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
 %% Specify SaveName
 if strcmp(mode,'case')
     CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
@@ -246,7 +253,7 @@ end
 
 SaveName = fullfile(DataDir,CaseName);
 V = CylVolumeFie(time);
-save(SaveName,'Settings','Cyl','Int','Exh','Comb','time','y','yNames','V','SpS');
+save(SaveName,'Settings','Cyl','Int','Exh','Comb','time','y','yNames','V','SpS','HRR','CA10','CA50','CA90','BDUR');
 fprintf('Saved solution of Case %3i to %s\n',iCase,SaveName);
 
 end

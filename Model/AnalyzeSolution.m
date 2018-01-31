@@ -5,7 +5,7 @@ addpath('General');
 global Runiv SpS
 Runiv = 8.3144598;
 %% Datadir just to show how you can organize output
-DataDir = 'output';
+DataDir = 'output'; 
 %% Units, for convenience only
 g=1e-3;
 ms=1e-3; 
@@ -137,5 +137,17 @@ PMEP = -W_pumploop/VDisp  % (= IMEP_gross - IMEP_net)
 BMEP = (2*pi*(nREVS/Settings.Ncyc)*T_mean)/VDisp
 FMEP = IMEP_gross - BMEP
 
+%% Plotting heat release rate
+HRR_plot = HRR(350:420);
+CA = -360:360;
+CA_plot = 1:length(HRR_plot);
 
-%implementing new efficiency here
+figure(3)
+plot(CA,HRR)
+xlabel('Crankangle [Degrees]')
+ylabel('Heat release rate [J/degree]')
+title('Heat release rate')
+hold on
+plot(CA10,HRR(361+CA10),'r*');
+plot(CA50,HRR(361+CA50),'r*');
+plot(CA90,HRR(361+CA90),'r*');

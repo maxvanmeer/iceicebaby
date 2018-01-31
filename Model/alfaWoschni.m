@@ -2,11 +2,11 @@ function [alfa]=alfaWoschni(reducedCa,T,p,pm,Tr,pr,Vr)
 global SOC EOC Stroke omega VDisp Bore
 C1 = 6.18;
 C2 = 0;
-if reducedCa > -180 && reducedCa < SOC % Compression period
+if reducedCa > -180 & reducedCa < SOC % Compression period
  C1 = 2.28;
  C2 = 0;
 end
-if reducedCa > SOC && reducedCa < EOC % Combustion period
+if reducedCa > SOC & reducedCa < EOC % Combustion period
  C1 = 2.28;
  C2 = 3.24e-3;
 end
