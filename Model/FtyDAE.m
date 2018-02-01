@@ -108,7 +108,7 @@ EOC = CAend;
 
 V0      = CylVolumeFie(t(1));
 T0      = 273;
-p0      = 3.5*10^5;                                             %might need to be adjusted because of looad change
+p0      = 3.5*10^5;
 
 pm = ((VDisp+Vc)/(V))^gamma * p0;      
 

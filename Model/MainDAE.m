@@ -83,7 +83,7 @@ REVS    = N/60;
 omega   = REVS*2*pi;
 tcyc    = (2/REVS);
 t       = [0:0.1:360]./360*tcyc*Ncyc;
-CADS        = omega/(2*pi)*360;
+CADS    = omega/(2*pi)*360;
 %% Compute initial conditions and intake/exhaust composition
 V0      = CylVolumeFie(t(1));
 T0      = 273;
