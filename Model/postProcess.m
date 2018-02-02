@@ -56,7 +56,7 @@ dRPM = (max(RPM_input)-min(RPM_input))/1000;
 dT = (max(T_input)-min(T_input))/1000;
 RPM_range = 500:dRPM:2250;
 T_range = 50:dT:2250;
-F = scatteredInterpolant(RPM_input',T_input',efficiency','linear','none');
+F = scatteredInterpolant(RPM_input',T_input',efficiency','natural','none');
 [RPMq,Tq] = meshgrid(RPM_range,T_range);
 q = F(RPMq,Tq);
 

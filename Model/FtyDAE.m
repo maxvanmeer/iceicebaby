@@ -1,10 +1,10 @@
 function [yp] = FtyDAE( t,y )
 global Int Exh QLHV SpS Runiv omega
-global GaussatCA50  mfuIVCClose si EtaComb Bore Stroke Omega rc CA50 BDUR iCase
+global  mfuIVCClose si EtaComb Bore Stroke rc CA50 BDUR SOC EOC
 
 Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny. 
 Tpiston = 273+110;  %110 degrees Celsius is a guess, based on the normal temperature of engine oil (which cools the pistons). NOT SURE.
-alfa    = 500;
+% alfa    = 500;
 
 VDisp   = pi*(Bore/2)^2*Stroke;
 Vc      = VDisp/(rc-1);
@@ -123,7 +123,7 @@ p0      = 3.5*10^5;
 
 pm = ((VDisp+Vc)/(V))^gamma * p0;      
 
-alfa = alfaWoschni(reducedCa,T,p,pm,T0,p0,V0,SOC,EOC);
+alfa = alfaWoschni(reducedCa,T,p,pm,T0,p0,V0);
 
 dQhl = alfa*(A_c*(Twall-T)+A_p*(Tpiston-T));
 

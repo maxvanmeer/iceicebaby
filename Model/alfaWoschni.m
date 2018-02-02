@@ -1,8 +1,9 @@
-function [alfa]=alfaWoschni(reducedCa,T,p,pm,Tr,pr,Vr,SOC,EOC)
+function [alfa]=alfaWoschni(reducedCa,T,p,pm,Tr,pr,Vr)
 global SOC EOC Stroke omega VDisp Bore
 
 C1 = 6.18;                              % Intake / Exhaust period
 C2 = 0;
+
 if reducedCa > -180 && reducedCa < SOC  % Compression period
  C1 = 2.28;
  C2 = 0;
@@ -16,6 +17,9 @@ Sp  = 2 * Stroke * omega / 2 / pi;
 fac = VDisp*Tr/pr/Vr;     
 
 w   = C1*Sp+C2*fac*(p-pm);
+if (w<0)
+   w=0; 
+end
 
 C = 3.26;
 m = 0.8;

@@ -24,6 +24,12 @@ elseif nargin ==3
     paramNumber = varargin{3};
     mode = 'couple';
     
+
+elseif nargin==2
+   T=varargin{1};
+   w=varargin{2};
+   paramNumber=1;
+   mode = 'couple';
 end
 
 if (~exist('iCase','var'))
@@ -41,6 +47,7 @@ end
 %% Add path to general functions and set Runiv
 addpath('General');
 global Runiv SpS QLHV
+global CA05 CA10 CA50 CA90 CA95 BDUR
 Runiv = 8.3144598;
 %% Datadir just to show how you can organize output
 DataDir = 'output';
@@ -73,10 +80,10 @@ end
 Cyl.LCon = LCon;Cyl.Stroke=Stroke;Cyl.Bore=Bore;Cyl.rc=rc;
 
 %% Simple combustion model settings (a gaussian distribution)
-global GaussatCA50 mfuIVCClose si EtaComb CA50 BDUR
+global mfuIVCClose si EtaComb 
+
 CA50=10;                        % CA50 (50% HR)
 BDUR=20;                        % Burn Duration
-GaussatCA50  = gmdistribution(CA50,BDUR,1);
 EtaComb = 0.99;                 % Combustion efficiency
 
 %% Intake and exhaust pressures
@@ -201,7 +208,7 @@ for i=3:3+length(Names)-1
 end
 mfuIVCClose     = y0(3);
 %% Computing CA values
-global CA05 CA10 CA50 CA90 CA95 BDUR
+
 ReducedCA = -360:360;
 HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA);
 for i = 1:length(HRR)

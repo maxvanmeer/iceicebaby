@@ -16,6 +16,7 @@ liter = dm^3;
 %% Select a loadcase
 iCase = 122;                                                                 %1 for standard, 2 for adjusted
 CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
+CaseName = 'paramCase001.mat';
 SaveName = fullfile(DataDir,CaseName);
 load(SaveName);
 fprintf('Read solution of Case %3i from %s\n',iCase,SaveName);
