@@ -1,10 +1,12 @@
 function [yp] = FtyDAE( t,y )
-global Int Exh QLHV SpS Runiv omega SOC EOC
-global GaussatCA50  mfuIVCClose si EtaComb rc VDisp
+global Int Exh QLHV SpS Runiv omega
+global GaussatCA50  mfuIVCClose si EtaComb Bore Stroke Omega rc CA50 BDUR iCase
 
 Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny. 
 Tpiston = 273+110;  %110 degrees Celsius is a guess, based on the normal temperature of engine oil (which cools the pistons). NOT SURE.
+alfa    = 500;
 
+VDisp   = pi*(Bore/2)^2*Stroke;
 Vc      = VDisp/(rc-1);
 
 %UNTITLED3 Summary of this function goes here
@@ -91,16 +93,25 @@ else
     Exh.Y = YE;
 end
 dmidt       = [YI*dmdtI + YE*dmdtE]';
-dmfuComb    = EtaComb*mfuIVCClose*pdf(GaussatCA50,reducedCa)*CADS;
+%dmfuComb    = EtaComb*mfuIVCClose*pdf(GaussatCA50,reducedCa)*CADS;
+dmfuComb    = EtaComb*mfuIVCClose*wiebefunctions(reducedCa)*CADS;
 dmidt_c     = si'*dmfuComb;
 dmidt       = dmidt - dmidt_c;
 dQcomb      = QLHV*dmfuComb;
 dQcomb_real = ei*dmidt_c;
 
-%% Woshni heatloss
+%% Woschni heatloss
 %normal model
-CA50=10;                        % CA50 (50% HR), replace with 
-BDUR=20;                        % Burn Duration, replace with data case
+% CA50=10;                        % CA50 (50% HR), replace with 
+load('currentCase.mat');
+HR = currentCase.HR;
+ReducedCA = -360:360;
+
+CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat ReducedCA van 0 tot 360 loopt en HR van 1 tot 360
+CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
+CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
+% BDUR=20;                        % Burn Duration, replace with data case
+BDUR = CA90-CA10;
 CAign = CA50-0.5*BDUR;
 CAend = CAign+BDUR;
 SOC = CAign;
@@ -112,7 +123,7 @@ p0      = 3.5*10^5;
 
 pm = ((VDisp+Vc)/(V))^gamma * p0;      
 
-alfa = alfaWoschni(reducedCa,T,p,pm,T0,p0,V0);
+alfa = alfaWoschni(reducedCa,T,p,pm,T0,p0,V0,SOC,EOC);
 
 dQhl = alfa*(A_c*(Twall-T)+A_p*(Tpiston-T));
 

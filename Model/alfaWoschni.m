@@ -1,4 +1,4 @@
-function [alfa]=alfaWoschni(reducedCa,T,p,pm,Tr,pr,Vr)
+function [alfa]=alfaWoschni(reducedCa,T,p,pm,Tr,pr,Vr,SOC,EOC)
 global SOC EOC Stroke omega VDisp Bore
 
 C1 = 6.18;                              % Intake / Exhaust period

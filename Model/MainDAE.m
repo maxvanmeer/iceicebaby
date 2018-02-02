@@ -1,12 +1,42 @@
-function MainDAE(iCase)
-defaultCase = 122; % In case you want to run this file directly
+function MainDAE(varargin)
+%If you only want to run a case
+%1st arg: iCase
 
-if (~exist('iCase','var'))
-   iCase = defaultCase; 
+%If you want to run a T-w couple:
+%1st arg: T
+%2nd arg: w
+
+%Give only one argument if you want to use a case, or two arguments if you
+%want to use a T-w couple
+
+mode = 'case';
+defaultCase = 124; % In case you want to run this file directly
+
+if nargin == 0
+    iCase = defaultCase;
+    
+elseif nargin == 1 % Run a specific case
+    iCase = varargin{1};
+    
+elseif nargin ==3
+    T = varargin{1};
+    w = varargin{2};
+    paramNumber = varargin{3};
+    mode = 'couple';
+    
 end
 
+if (~exist('iCase','var'))
+    iCase = defaultCase; %Catching exception
+end
 
-disp(['Running case ',num2str(iCase),'...']);
+switch mode
+    case 'case'
+        disp(['Running case ',num2str(iCase),'...']);
+        
+    case 'couple'
+        disp(['Running couple T=',num2str(T),' w=',num2str(w),'...']);
+end
 
 %% Add path to general functions and set Runiv
 addpath('General');
@@ -19,9 +49,10 @@ DataDir = 'output';
 % iCase = input('Select your loadcase (122 t/m 131))');
 CaseName = ['cases.mat'];
 load(CaseName);
+
 %% Units, for convenience only
 g=1e-3;
-ms=1e-3; 
+ms=1e-3;
 bara=1e5;
 mm=1e-3;cm=1e-2;dm=0.1;
 liter = dm^3;
@@ -33,31 +64,41 @@ Bore    = 130*mm;                   % bore
 rc      = 17.45;                    % compression ratio
 N       = allCases(iCase-121).RPM_act;          % RPM
 VDisp   = pi*(Bore/2)^2*Stroke;     % Displacement Volume
+if strcmp(mode,'case')
+    N       = allCases(iCase-121).RPM_act;          % RPM
+elseif strcmp(mode,'couple')
+    N = w/(2*pi)*60; %revs/s
+    
+end
 Cyl.LCon = LCon;Cyl.Stroke=Stroke;Cyl.Bore=Bore;Cyl.rc=rc;
 
 %% Simple combustion model settings (a gaussian distribution)
-global GaussatCA50 mfuIVCClose si EtaComb
+global GaussatCA50 mfuIVCClose si EtaComb CA50 BDUR
 CA50=10;                        % CA50 (50% HR)
 BDUR=20;                        % Burn Duration
 GaussatCA50  = gmdistribution(CA50,BDUR,1);
 EtaComb = 0.99;                 % Combustion efficiency
-Comb.Shape  = GaussatCA50;
-Comb.eta    = EtaComb;
-Tparts = [400 475 630 415 840]; 
+
 %% Intake and exhaust pressures
-p_plenum  = allCases(iCase-121).p_plenum*bara;               % plenum pressure
-T_plenum  = allCases(iCase-121).T_plenum;                    % plenum temperature
-p_exhaust = p_plenum+0.1*bara;                               % exhaust back-pressure
-T_exhaust  = 400;                                            % plenum temperature
+
+if strcmp(mode,'case')
+    p_plenum  = allCases(iCase-121).p_plenum*bara;               % plenum pressure
+    T_plenum  = allCases(iCase-121).T_plenum;                    % plenum temperature
+    p_exhaust = p_plenum+0.1*bara;                               % exhaust back-pressure
+elseif strcmp(mode,'couple')
+    T_plenum = 320;
+    %p_plenum will be calculated later on
+    %p_exhaust too
+end
+T_exhaust  = 400;
 
 %% Geometric and timing data of the valves
 filenameValveData=fullfile('General','Valvedata.mat');
 load(filenameValveData);
-global Int Exh 
+global Int Exh
 Di = 48.5*mm;      % diameter inlet valve
 De = 43.25*mm;     % diameter exhaust valve
-Int.Ca=CaI;Int.L=LI;Int.D=Di;Int.p=p_plenum;Int.T   = T_plenum;
-Exh.Ca=CaE;Exh.L=LE;Exh.D=De;Exh.p=p_exhaust;Exh.T   = T_exhaust;
+
 
 %% Chemistry and Thermodynamic properties
 filenameThermalDataBase=fullfile('General','NasaThermDatFull.mat');
@@ -88,9 +129,27 @@ CADS    = omega/(2*pi)*360;
 V0      = CylVolumeFie(t(1));
 T0      = 273;
 p0      = 3.5*bara;                                             % Typical full load set point
-lambda  = allCases(iCase-121).lambda_AF;                                                  
-AF      = AFstoi*lambda;                                        % Real AF ratio
-EGRf    = allCases(iCase-121).EGRf/100;                                                 % EGR fraction (mass based)
+
+
+if strcmp(mode,'case')
+    lambda  = allCases(iCase-121).lambda_AF;
+    AF      = AFstoi*lambda;
+    EGRf = allCases(iCase-121).EGRf/100;
+elseif strcmp(mode,'couple')
+    %WAT IS QLHV????? Mogelijke oplossing gevonden maar vreemd. (zie
+    %wiebetest)
+    QLHV=4.26e7;
+    mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011)/6;
+    mair = (10.8e-3 + 28.4e-3 *T/2700)/6;
+    AF = mair/mfuel;
+    
+    EGR = 20;
+    EGRf = EGR/100;
+    Vd   = pi*(Bore/2)^2*Stroke; % Displacement volume for 1 cylinder
+    rho = (1+EGRf)*mair/Vd;    
+end
+% Real AF ratio
+
 fracfu  = 1/(AF+1);
 fracair = 1 - fracfu;
 YReactants = fracfu*Yfuel + fracair*Yair;                       % Composition vector
@@ -101,8 +160,12 @@ end
 QLHV = (hi*YReactants'-hi*YProducts')/YReactants(1);            % Classical definition of lower heating value. Just for reference not used!
 Comb.QLHV    = QLHV;
 
+Int.T   = T_plenum;
+Exh.T   = T_exhaust;
 Int.Y   = (1-EGRf)*YReactants+EGRf*YProducts;                   % Applying EGR setpoint
 Exh.Y   = YProducts;
+Int.T   = T_plenum;
+Exh.T   = T_exhaust;
 for ii=1:Nsp
     Int.h(ii)   = HNasa(Int.T,SpS(ii));
     Int.e(ii)   = ENasa(Int.T,SpS(ii));
@@ -119,6 +182,17 @@ Settings.N      = N;
 Settings.EGR    = EGRf;
 Settings.AF     = AF;
 Settings.Ncyc   = Ncyc;                                                     %Added info about the number of cycles
+
+if strcmp(mode,'couple')
+    p_plenum = rho*Rg*T_plenum;
+    p_exhaust = p_plenum+0.1*bara;                               % exhaust back-pressure
+end
+
+Int.Ca=CaI;Int.L=LI;Int.D=Di;Int.p=p_plenum;
+Exh.Ca=CaE;Exh.L=LE;Exh.D=De;Exh.p=p_exhaust;
+
+
+
 %% Set initial solution (it is an DAE problem so we must initialize)
 y0(1)=p0;y0(2)=T0;y0(3:3+Nsp-1) = mass*[Int.Y];
 yNames={'p','T','','','','',''};
@@ -126,6 +200,37 @@ for i=3:3+length(Names)-1
     yNames{i}=char(Names(i-2));
 end
 mfuIVCClose     = y0(3);
+%% Computing CA values
+global CA05 CA10 CA50 CA90 CA95 BDUR
+ReducedCA = -360:360;
+HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA);
+for i = 1:length(HRR)
+    %HR(i) = trapz(HRR(1:ReducedCA(i)));
+    HR(i) = trapz(HRR(1:i));
+end
+CA05 = ReducedCA(find(HR>0.05*HR(length(HR)),1)+1);
+CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat ReducedCA van 0 tot 360 loopt en HR van 1 tot 360
+CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
+CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
+CA95 = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1);
+BDUR = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1) - ReducedCA(find(HR>0.01*HR(length(HR)),1)+1);
+
+%% Save current case to pass on to FtyDAE
+if strcmp(mode,'case')
+    currentCase = allCases(iCase-121);
+
+elseif strcmp(mode,'couple')
+    currentCase.T = T;
+    currentCase.EGRf = EGRf;
+    currentCase.p_plenum = p_plenum;
+    currentCase.T_plenum=T_plenum;
+    currentCase.w = w;
+end
+currentCase.HR = HR;
+
+currentCase.mode = mode;
+save('currentCase.mat','currentCase');
+
 
 %% Solving the DAE system
 tspan=t;
@@ -135,20 +240,20 @@ tic;
 tel=toc;
 fprintf('Spent time %9.2f (solver %s)\n',tel,'ode15s');
 
-%% Computing Heat release rate (yet again)
-ReducedCA = 0:360;
-HRR = EtaComb*mfuIVCClose*CADS*wiebefunctions(ReducedCA);
-for i = 1:length(HRR)
-    HR(i) = trapz(HRR(1:ReducedCA(i)));
-end
-CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat ReducedCA van 0 tot 360 loopt en HR van 1 tot 360
-CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
-CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
+
 %% Specify SaveName
-CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
+if strcmp(mode,'case')
+    CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
+
+elseif strcmp(mode,'couple')
+    CaseName = ['paramCase' num2str(paramNumber,'%3.3i') '.mat'];
+
+end
+
+
 SaveName = fullfile(DataDir,CaseName);
 V = CylVolumeFie(time);
-save(SaveName,'Settings','Cyl','Int','Exh','Comb','time','y','yNames','V','SpS');
+save(SaveName,'Settings','Cyl','Int','Exh','Comb','time','y','yNames','V','SpS','HRR','CA10','CA50','CA90','BDUR');
 fprintf('Saved solution of Case %3i to %s\n',iCase,SaveName);
 
 end

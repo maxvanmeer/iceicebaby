@@ -1,13 +1,22 @@
-function [HRR] = wiebefunctions(Ca)
-CA = Ca;
-%CA = -360:360;
+clc;
+clear all;
+
+% This script is finished, but the following questions remain:
+% - what to do with CR pressure? Used in a different method to calculate the delay.
+% This delay is almost equal to the method of the slides. (KINDA FIXED)
+% - Fix IDtP: Since IDt depends on TSOI and PSOI you have to determine these 
+% Wiebe parameters 'on the fly'. Use a similar decision approach as for instance 
+% for the Vr, pr and Tr in the Woschni parametrization. (FIXED)
+% - mist nog een totale offset wanneer alles begint, dus wanneer moet SOI
+% zijn? (NOT FIXED)
+% - clipping might result in strange things when used.
+
+CA = -360:360;
 
 load('currentCase.mat');
 mode = currentCase.mode;
 
 %Per phase
-
-
 if strcmp(mode,'case')
     % Do wiebe with case data
     f = currentCase.f;
@@ -15,6 +24,12 @@ if strcmp(mode,'case')
     nP = currentCase.n;
     dCA = currentCase.dCA;
     CAI = currentCase.CAign;
+    
+    %     f = [0.018 0.894  0.093];
+    %     a = [1.859 3.356 2.495];
+    %     nP = [3 2 3];
+    %     dCA = [1.139 28.963 60.648];
+    %     CAI = [-2.647 -1.664 1.2];
     
     Premix = SingleWiebe(CA,a(1),nP(1),dCA(1),CAI(1));
     Mixing = SingleWiebe(CA,a(2),nP(2),dCA(2),CAI(2));
@@ -70,6 +85,7 @@ elseif strcmp(mode,'couple')
     TaL=3289;
     mL=0.145;
     IDtL = AL*p^(-nL)*exp(TaL/Temp)*EGRf^mL; %[ms]
+    rtL = IDtL / INJ_durt;
     CAignL = rad2deg(w*(IDtL+SOIt)/1000); % [CAD] 
     
     %Calculate fP and fM
@@ -116,6 +132,13 @@ elseif strcmp(mode,'couple')
     Late = SingleWiebe(CA,aL,nL_wiebe,dCAL,CAignL);
     HRR = fP*Premix + fM*Mixing + fL*Late;
 end
-
-
-end
+result = [fP fM fL; aP aM aL; nP_wiebe nM_wiebe nL_wiebe; dCAP dCAM dCAL; CAignP CAignM CAignL]
+ref_result = [0.018 0.894  0.093; 1.859 3.356 2.495; 3 2 3; 1.139 28.963 60.648; -2.647 -1.664 1.2]
+close all
+figure;
+hold on
+plot(CA,Premix);
+plot(CA,Mixing);
+plot(CA,Late);
+plot(CA,HRR);
+xlim([-20 120])
