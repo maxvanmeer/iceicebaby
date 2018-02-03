@@ -13,17 +13,17 @@ clear all;
 
 CA = -360:360;
 
-load('currentCase.mat');
-mode = currentCase.mode;
-
+% load('currentCase.mat');
+% mode = currentCase.mode;
+global f a dCA mode  w EGRf T
 %Per phase
 if strcmp(mode,'case')
     % Do wiebe with case data
-    f = currentCase.f;
-    a = currentCase.a;
-    nP = currentCase.n;
-    dCA = currentCase.dCA;
-    CAI = currentCase.CAign;
+%     f = currentCase.f;
+%     a = currentCase.a;
+%     nP = currentCase.n;
+%     dCA = currentCase.dCA;
+    CAI = CAign;
     
     %     f = [0.018 0.894  0.093];
     %     a = [1.859 3.356 2.495];
@@ -38,8 +38,8 @@ if strcmp(mode,'case')
     
 elseif strcmp(mode,'couple')
     % Do wiebe with parametrization
-    T = currentCase.T;
-    w = currentCase.w;
+%     T = currentCase.T;
+%     w = currentCase.w;
     EGRf= currentCase.EGRf;
     EOIt = deg2rad(-2+18*T/2700)/w*1000;    %[ms]!!
     INJ_durt = 0.5+3*T/2700;                %[ms]

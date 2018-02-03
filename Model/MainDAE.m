@@ -8,6 +8,8 @@ function MainDAE(varargin)
 
 %Give only one argument if you want to use a case, or two arguments if you
 %want to use a T-w couple
+global Runiv SpS QLHV mode  w EGRf p_plenum T_plenum HR T
+global CA05 CA10 CA50 CA90 CA95 BDUR
 
 mode = 'case';
 defaultCase = 124; % In case you want to run this file directly
@@ -46,8 +48,7 @@ end
 
 %% Add path to general functions and set Runiv
 addpath('General');
-global Runiv SpS QLHV
-global CA05 CA10 CA50 CA90 CA95 BDUR
+
 Runiv = 8.3144598;
 %% Datadir just to show how you can organize output
 DataDir = 'output';
@@ -228,20 +229,20 @@ CA95 = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1);
 BDUR = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1) - ReducedCA(find(HR>0.01*HR(length(HR)),1)+1);
 
 %% Save current case to pass on to FtyDAE
-if strcmp(mode,'case')
-    currentCase = allCases(iCase-121);
-    
-elseif strcmp(mode,'couple')
-    currentCase.T = T;
-    currentCase.EGRf = EGRf;
-    currentCase.p_plenum = p_plenum;
-    currentCase.T_plenum=T_plenum;
-    currentCase.w = w;
-end
-currentCase.HR = HR;
-
-currentCase.mode = mode;
-save('currentCase.mat','currentCase');
+% if strcmp(mode,'case')
+%     currentCase = allCases(iCase-121);
+%     
+% elseif strcmp(mode,'couple')
+%     currentCase.T = T;
+%     currentCase.EGRf = EGRf;
+%     currentCase.p_plenum = p_plenum;
+%     currentCase.T_plenum=T_plenum;
+%     currentCase.w = w;
+% end
+% currentCase.HR = HR;
+% 
+% currentCase.mode = mode;
+% save('currentCase.mat','currentCase');
 
 
 %% Solving the DAE system
