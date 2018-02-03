@@ -123,8 +123,8 @@ ylabel('Torque [Nm]');
 title('Efficiency map');
 cc=colorbar;
 grid
-set(cc, 'Fontsize', 20)
-set(gca,'FontSize',20)
+% set(cc, 'Fontsize', 20)
+% set(gca,'FontSize',20)
 hold on
 plot3(RPM_input,T_input,efficiency*1.5,'o');
 
@@ -140,8 +140,8 @@ ylabel('Torque [Nm]');
 title('bsfc map');
 cc=colorbar;
 grid
-set(cc, 'Fontsize', 20)
-set(gca,'FontSize',20)
+% set(cc, 'Fontsize', 20)
+% set(gca,'FontSize',20)
 
 %imep
 F_imep = scatteredInterpolant(RPM_input',T_input',IMEP_gross','natural','none');
@@ -155,8 +155,8 @@ ylabel('Torque [Nm]');
 title('imep');
 cc=colorbar;
 grid
-set(cc, 'Fontsize', 20)
-set(gca,'FontSize',20)
+% set(cc, 'Fontsize', 20)
+% set(gca,'FontSize',20)
 
 %bmep
 F_BMEP = scatteredInterpolant(RPM_input',T_input',BMEP','natural','none');
@@ -169,8 +169,8 @@ ylabel('Torque [Nm]');
 title('bmep');
 cc=colorbar;
 grid
-set(cc, 'Fontsize', 20)
-set(gca,'FontSize',20)
+% set(cc, 'Fontsize', 20)
+% set(gca,'FontSize',20)
 
 %fmep
 F_FMEP = scatteredInterpolant(RPM_input',T_input',FMEP','natural','none');
@@ -183,5 +183,5 @@ ylabel('Torque [Nm]');
 title('fmep');
 cc=colorbar;
 grid
-set(cc, 'Fontsize', 20)
-set(gca,'FontSize',20)
+% set(cc, 'Fontsize', 20)
+% set(gca,'FontSize',20)

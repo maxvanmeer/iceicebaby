@@ -94,7 +94,9 @@ else
 end
 dmidt       = [YI*dmdtI + YE*dmdtE]';
 %dmfuComb    = EtaComb*mfuIVCClose*pdf(GaussatCA50,reducedCa)*CADS;
+% dmfuComb    = EtaComb*mfuel*wiebefunctions(reducedCa)*CADS;
 dmfuComb    = EtaComb*mfuIVCClose*wiebefunctions(reducedCa)*CADS;
+
 dmidt_c     = si'*dmfuComb;
 dmidt       = dmidt - dmidt_c;
 dQcomb      = QLHV*dmfuComb;
