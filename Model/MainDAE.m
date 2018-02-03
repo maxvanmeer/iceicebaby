@@ -214,8 +214,8 @@ mfuIVCClose     = y0(3);
 %% Computing CA values
 
 ReducedCA = -360:360;
-% HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA);
-HRR = EtaComb*QLHV*mfuel*wiebefunctions(ReducedCA);
+HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA);
+% HRR = EtaComb*QLHV*mfuel*wiebefunctions(ReducedCA);
 
 for i = 1:length(HRR)
     %HR(i) = trapz(HRR(1:ReducedCA(i)));
