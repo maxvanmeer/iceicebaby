@@ -18,7 +18,7 @@ fac = VDisp*Tr/pr/Vr;
 
 w   = C1*Sp+C2*fac*(p-pm);
 if (w<0)
-   w=0; 
+   w=C1*Sp; 
 end
 
 C = 3.26;

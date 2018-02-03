@@ -24,12 +24,12 @@ elseif nargin ==3
     paramNumber = varargin{3};
     mode = 'couple';
     
-
+    
 elseif nargin==2
-   T=varargin{1};
-   w=varargin{2};
-   paramNumber=1;
-   mode = 'couple';
+    T=varargin{1};
+    w=varargin{2};
+    paramNumber=1;
+    mode = 'couple';
 end
 
 if (~exist('iCase','var'))
@@ -69,7 +69,6 @@ LCon    = 261.6*mm;                 % connecting rod length
 Stroke  = 158*mm;                   % stroke
 Bore    = 130*mm;                   % bore
 rc      = 17.45;                    % compression ratio
-N       = allCases(iCase-121).RPM_act;          % RPM
 VDisp   = pi*(Bore/2)^2*Stroke;     % Displacement Volume
 if strcmp(mode,'case')
     N       = allCases(iCase-121).RPM_act;          % RPM
@@ -80,7 +79,7 @@ end
 Cyl.LCon = LCon;Cyl.Stroke=Stroke;Cyl.Bore=Bore;Cyl.rc=rc;
 
 %% Simple combustion model settings (a gaussian distribution)
-global mfuIVCClose si EtaComb 
+global mfuIVCClose si EtaComb
 
 CA50=10;                        % CA50 (50% HR)
 BDUR=20;                        % Burn Duration
@@ -126,7 +125,7 @@ si      = nui.*Mi/Mi(1);                                        % Reaction stoic
 AFstoi_molar  = nui(2)+nui(2)*Xair(3)/Xair(2);                  % So-called stoichiometric air fuel ratio (fuel property for given air composition), sometimes students use this as AFstoi.
 AFstoi  = si(2)+si(2)*Yair(3)/Yair(2);                          % So-called stoichiometric air fuel ratio (fuel property for given air composition)
 %% Set simulation time
-Ncyc    = 20;
+Ncyc    = 30;
 REVS    = N/60;
 omega   = REVS*2*pi;
 tcyc    = (2/REVS);
@@ -146,14 +145,18 @@ elseif strcmp(mode,'couple')
     %WAT IS QLHV????? Mogelijke oplossing gevonden maar vreemd. (zie
     %wiebetest)
     QLHV=4.26e7;
-    mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011)/6;
-    mair = (10.8e-3 + 28.4e-3 *T/2700)/6;
-    AF = mair/mfuel;
+%     mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011);
+%     mair = (10.8e-3 + 28.4e-3 *T/2700);
+    mfuel = 2*pi*T/(0.46*QLHV);
+    mair = 2.7e-3 +(9.8-2.7)*1e-3*T/2700;
+
+    AF = mair/mfuel
+    lambda = AF/AFstoi
     
     EGR = 20;
     EGRf = EGR/100;
-    Vd   = pi*(Bore/2)^2*Stroke; % Displacement volume for 1 cylinder
-    rho = (1+EGRf)*mair/Vd;    
+    Vd   = 6*pi*(Bore/2)^2*Stroke; % Displacement volume for all cylinders
+    rho = (1+EGRf)*mair/Vd;
 end
 % Real AF ratio
 
@@ -211,6 +214,8 @@ mfuIVCClose     = y0(3);
 
 ReducedCA = -360:360;
 HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA);
+% HRR = EtaComb*QLHV*mfuel*wiebefunctions(ReducedCA);
+
 for i = 1:length(HRR)
     %HR(i) = trapz(HRR(1:ReducedCA(i)));
     HR(i) = trapz(HRR(1:i));
@@ -225,7 +230,7 @@ BDUR = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1) - ReducedCA(find(HR>0.01*HR(l
 %% Save current case to pass on to FtyDAE
 if strcmp(mode,'case')
     currentCase = allCases(iCase-121);
-
+    
 elseif strcmp(mode,'couple')
     currentCase.T = T;
     currentCase.EGRf = EGRf;
@@ -251,16 +256,16 @@ fprintf('Spent time %9.2f (solver %s)\n',tel,'ode15s');
 %% Specify SaveName
 if strcmp(mode,'case')
     CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
-
+    
 elseif strcmp(mode,'couple')
     CaseName = ['paramCase' num2str(paramNumber,'%3.3i') '.mat'];
-
+    
 end
 
 
 SaveName = fullfile(DataDir,CaseName);
 V = CylVolumeFie(time);
-save(SaveName,'Settings','Cyl','Int','Exh','Comb','time','y','yNames','V','SpS','HRR','CA10','CA50','CA90','BDUR');
+save(SaveName,'Settings','Cyl','Int','Exh','Comb','time','y','yNames','V','SpS','HRR','CA10','CA50','CA90','BDUR','mode','HRR');
 fprintf('Saved solution of Case %3i to %s\n',iCase,SaveName);
 
 end

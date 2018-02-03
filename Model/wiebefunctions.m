@@ -26,8 +26,8 @@ elseif strcmp(mode,'couple')
     T = currentCase.T;
     w = currentCase.w;
     EGRf= currentCase.EGRf;
-    EOIt = deg2rad(-2+18*T/2700)/w*1000;    %[ms]!!
-    INJ_durt = 0.5+3*T/2700;                %[ms]
+    EOIt = deg2rad(-2+22*T/2600)/w*1000;    %[ms]!!
+    INJ_durt = 0.5+3*T/2600;                %[ms]
     SOIt = EOIt-INJ_durt;                   %[ms]
     INJ_durd = rad2deg((INJ_durt/1000)*w);  %[CAD]
     EOId = rad2deg((EOIt/1000)*w);          %[CAD]
@@ -57,7 +57,7 @@ elseif strcmp(mode,'couple')
     nP=0.623;
     TaP=2977;
     mP=0.173;
-    IDtP = AP*p^(-nP)*exp(TaP/Temp)*EGRf^mP; %[ms]
+    IDtP = AP*p^(-nP)*exp(TaP/Temp)*EGRf^mP; %[ms] Ignition Delay
     rt = IDtP / INJ_durt;   %[-]
     CAignP = rad2deg((SOIt+IDtP)/1000*w); % [deg=CAD]
     
