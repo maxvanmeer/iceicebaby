@@ -1,16 +1,18 @@
 function MainDAE(varargin)
+%% MainDAE %%
+% The MainDAE file is able to run both a single case, or a T-w couple
 %If you only want to run a case
 %1st arg: iCase
 
 %If you want to run a T-w couple:
-%1st arg: T
-%2nd arg: w
+%1st arg: T [Nm]
+%2nd arg: w [rad/s]
 
 %Give only one argument if you want to use a case, or two arguments if you
 %want to use a T-w couple
 
 mode = 'case';
-defaultCase = 124; % In case you want to run this file directly
+defaultCase = 131; % In case you want to run this file directly
 
 if nargin == 0
     iCase = defaultCase;
@@ -64,7 +66,7 @@ bara=1e5;
 mm=1e-3;cm=1e-2;dm=0.1;
 liter = dm^3;
 %% Set a few global variables
-global rc LCon Stroke Bore N omega Di De VDisp  % Engine globals
+global rc LCon Stroke Bore N omega Di De VDisp dt % Engine globals
 LCon    = 261.6*mm;                 % connecting rod length
 Stroke  = 158*mm;                   % stroke
 Bore    = 130*mm;                   % bore
@@ -79,18 +81,18 @@ end
 Cyl.LCon = LCon;Cyl.Stroke=Stroke;Cyl.Bore=Bore;Cyl.rc=rc;
 
 %% Simple combustion model settings (a gaussian distribution)
-global mfuIVCClose si EtaComb
+global mfuIVCClose si EtaComb Qheatloss
 
-CA50=10;                        % CA50 (50% HR)
-BDUR=20;                        % Burn Duration
+CA50=10;                        % Gaussian value, no longer relevant
+BDUR=20;                        % Gaussian value, no longer relevant
 EtaComb = 0.99;                 % Combustion efficiency
 
 %% Intake and exhaust pressures
 
 if strcmp(mode,'case')
-    p_plenum  = allCases(iCase-121).p_plenum*bara;               % plenum pressure
-    T_plenum  = allCases(iCase-121).T_plenum;                    % plenum temperature
-    p_exhaust = p_plenum+0.1*bara;                               % exhaust back-pressure
+    p_plenum  = allCases(iCase-121).p_plenum*bara;       % plenum pressure
+    T_plenum  = allCases(iCase-121).T_plenum;            % plenum temperature
+    p_exhaust = p_plenum+0.1*bara;                       % exhaust back-pressure
 elseif strcmp(mode,'couple')
     T_plenum = 320;
     %p_plenum will be calculated later on
@@ -130,6 +132,7 @@ REVS    = N/60;
 omega   = REVS*2*pi;
 tcyc    = (2/REVS);
 t       = [0:0.1:360]./360*tcyc*Ncyc;
+dt      = t(100)-t(99);
 CADS    = omega/(2*pi)*360;
 %% Compute initial conditions and intake/exhaust composition
 V0      = CylVolumeFie(t(1));
@@ -248,7 +251,9 @@ save('currentCase.mat','currentCase');
 tspan=t;
 odopt=odeset('RelTol',1e-4,'Mass',@MassDAE,'MassSingular','yes');           % Set solver settings (it is a DAE so ...,'MassSingular','yes')
 tic;
+Qheatloss = 0;
 [time,y]=ode15s(@FtyDAE,tspan,y0,odopt);                                    % Take a specific solver
+% disp(Qheatloss);    % Remove comment to display total amount of heat lost after running a case
 tel=toc;
 fprintf('Spent time %9.2f (solver %s)\n',tel,'ode15s');
 
@@ -261,7 +266,6 @@ elseif strcmp(mode,'couple')
     CaseName = ['paramCase' num2str(paramNumber,'%3.3i') '.mat'];
     
 end
-
 
 SaveName = fullfile(DataDir,CaseName);
 V = CylVolumeFie(time);

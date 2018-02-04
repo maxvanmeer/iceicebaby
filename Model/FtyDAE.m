@@ -1,5 +1,5 @@
 function [yp] = FtyDAE( t,y )
-global Int Exh QLHV SpS Runiv omega
+global Int Exh QLHV SpS Runiv omega Qheatloss dt
 global  mfuIVCClose si EtaComb Bore Stroke rc CA50 BDUR SOC EOC
 
 Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny. 
@@ -116,23 +116,24 @@ CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
 BDUR = CA90-CA10;
 CAign = CA50-0.5*BDUR;
 CAend = CAign+BDUR;
-SOC = CAign;
-EOC = CAend;
+SOC = CA10;
+EOC = CA90;
 
-V0      = CylVolumeFie(t(1));
-T0      = 273;
-p0      = 3.5*10^5;
-
+V0      = CylVolumeFie(t(1));   % Reference values for V, T, p, used for Woschni
+T0      = 320;                  % Plenum temperature
+p0      = 3.5*10^5;             % Plenum pressure
+ 
 pm = ((VDisp+Vc)/(V))^gamma * p0;      
-
+ 
 alfa = alfaWoschni(reducedCa,T,p,pm,T0,p0,V0);
+ 
+dQhl= alfa*(A_c*(Twall-T)+A_p*(Tpiston-T));
 
-dQhl = alfa*(A_c*(Twall-T)+A_p*(Tpiston-T));
-
+Qheatloss = Qheatloss + dQhl * dt;
+ 
 %% DAE formulation
 Rg = StateCyl.Rg;
 yp = [dQhl-p*dVdt+hpaI*dmdtI+hpaE*dmdtE;
     p*V-Rg*T*m;
     dmidt];
 end
-
