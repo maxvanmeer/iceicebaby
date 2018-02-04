@@ -16,7 +16,7 @@ liter = dm^3;
 %% Select a loadcase
 iCase = 131;                                                                 %1 for standard, 2 for adjusted
 CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
-CaseName = 'paramCase101.mat';
+% CaseName = 'paramCase101.mat'; % For debugging
 SaveName = fullfile(DataDir,CaseName);
 load(SaveName);
 fprintf('Read solution of Case %3i from %s\n',iCase,SaveName);
@@ -132,8 +132,7 @@ line(t(index)*[1 1]/ms,mfuel*[1 1]/g,'Marker','o','MarkerSize',8,'MarkerFaceColo
 tx=text(t(index)*[1 1]/ms,1.1*mfuel*[1 1]/g,'Selected fuel mass','Rotation',45);
 QLHV = Comb.QLHV;
 Qin = mfuel*QLHV;
-eff = W/Qin;
-eff_all = sum(W_all)/Settings.Ncyc/Qin;
+
 
 %% Torque for 6 cyclinders
 T_all = W_all/(2*pi*(nREVS/Settings.Ncyc));     % Torque of every cycle
@@ -150,6 +149,10 @@ IMEP_gross = Wcomp_exp/VDisp;                       % By work of complete cycle
 PMEP = -W_pumploop/VDisp;                           % By work of first revolution (= IMEP_gross - IMEP_net)
 BMEP = (2*pi*(nREVS/Settings.Ncyc)*T_mean)/VDisp;   % By work of measured brake torque
 FMEP = IMEP_gross - BMEP;                           % By work caused by friction (= IMEP_gross - BMEP)
+
+eff = W/Qin;
+eff_all = sum(W_all)/Settings.Ncyc/Qin;
+
 
 %% Plotting heat release rate
 HRR_plot = HRR(350:420);

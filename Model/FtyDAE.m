@@ -1,5 +1,5 @@
 function [yp] = FtyDAE( t,y )
-global Int Exh QLHV SpS Runiv omega HR T
+global Int Exh QLHV SpS Runiv omega
 global  mfuIVCClose si EtaComb Bore Stroke rc CA50 BDUR SOC EOC
 
 Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny. 
@@ -105,8 +105,8 @@ dQcomb_real = ei*dmidt_c;
 %% Woschni heatloss
 %normal model
 % CA50=10;                        % CA50 (50% HR), replace with 
-% load('currentCase.mat');
-% HR = currentCase.HR;
+load('currentCase.mat');
+HR = currentCase.HR;
 ReducedCA = -360:360;
 
 CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat ReducedCA van 0 tot 360 loopt en HR van 1 tot 360

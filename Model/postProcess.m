@@ -10,7 +10,7 @@ allParamCases = 1:length(T_input);
 
 
 line1 = 1100+((2600-1400)/400).*(RPM_input-700);
-line2=2600;
+line2=2250;
 line3=1350+((1350-2850)/1000).*(RPM_input-2200);
 line4=1050+((1050-2575)/600).*(RPM_input-2200);
 wrongIndices = find(T_input>line1 | T_input>line2 | T_input>line3 | T_input>line4);
@@ -90,22 +90,30 @@ for i =1:length(goodParams)
     
     bsfc_real(i) = mfuel/W*1000/J;
     w = RPM_input(i)/60*2*pi;
-    bsfc_fakenews(i) = mfuel/(T_input(i)*w*2*trev)*1000/J;
+    bsfc_input(i) = mfuel/(T_input(i)*w*2*trev)*1000/J;
     
-    efficiency(i) = W/Qin;
+
     
     T_all = W_all/(2*pi*(nREVS/myCase(i).Settings.Ncyc));     % Torque of every cycle
-    T_mean = sum(T_all)/(myCase(i).Settings.Ncyc);            % Mean torque of multiple cycles
+    T_mean(i) = sum(T_all)/(myCase(i).Settings.Ncyc);            % Mean torque of multiple cycles
+    T_V6(i) = 6*T_mean(i);
+    
+    
+        efficiency(i) = W/Qin;
+    eff_brake(i) = (2*pi*nREVS/myCase(i).Settings.Ncyc*T_mean(i))/Qin;
     
     myW(i) = W;
     VDisp = max(V) - min(V);
     IMEP_net(i) = W/VDisp;                                 % By work of second revolution of the cycle
     IMEP_gross(i) = Wcomp_exp/VDisp;                       % By work of complete cycle
-    BMEP(i) = (2*pi*(nREVS/myCase(i).Settings.Ncyc)*T_mean)/VDisp;   % By work of measured brake torque
+    BMEP(i) = (2*pi*(nREVS/myCase(i).Settings.Ncyc)*T_mean(i))/VDisp;   % By work of measured brake torque
     FMEP(i) = IMEP_gross(i) - BMEP(i);                           % By work caused by friction (= IMEP_gross - BMEP)
 
     
 end
+
+%% Create maps
+% T_input = T_V6;
 
 dRPM = (max(RPM_input)-min(RPM_input))/1000;
 dT = (max(T_input)-min(T_input))/1000;
@@ -120,26 +128,26 @@ figure
 mesh(RPMq,Tq,q);
 xlabel('RPM [1/min]');
 ylabel('Torque [Nm]');
-title('Efficiency map');
+title('Indicated efficiency [-]');
 cc=colorbar;
 grid
 % set(cc, 'Fontsize', 20)
 % set(gca,'FontSize',20)
 hold on
-plot3(RPM_input,T_input,efficiency*1.5,'o');
+plot3(RPM_input,T_input,efficiency*1.5,'k.');
 
 %bsfc
 
-F_bsfc = scatteredInterpolant(RPM_input',T_input',bsfc_real','natural','none');
-q_bsfc = F_bsfc(RPMq,Tq);
-
-figure
-mesh(RPMq,Tq,q_bsfc);
-xlabel('RPM [1/min]');
-ylabel('Torque [Nm]');
-title('bsfc map');
-cc=colorbar;
-grid
+% F_bsfc = scatteredInterpolant(RPM_input',T_input',bsfc_real','natural','none');
+% q_bsfc = F_bsfc(RPMq,Tq);
+% 
+% figure
+% mesh(RPMq,Tq,q_bsfc);
+% xlabel('RPM [1/min]');
+% ylabel('Torque [Nm]');
+% title('bsfc map');
+% cc=colorbar;
+% grid
 % set(cc, 'Fontsize', 20)
 % set(gca,'FontSize',20)
 
@@ -147,16 +155,16 @@ grid
 F_imep = scatteredInterpolant(RPM_input',T_input',IMEP_gross','natural','none');
 q_imep = F_imep(RPMq,Tq);
 
-
 figure
 mesh(RPMq,Tq,q_imep);
 xlabel('RPM [1/min]');
 ylabel('Torque [Nm]');
-title('imep');
+title('imep [Pa]');
 cc=colorbar;
 grid
-% set(cc, 'Fontsize', 20)
-% set(gca,'FontSize',20)
+hold on
+plot3(RPM_input,T_input,IMEP_gross*1.5,'k.');
+
 
 %bmep
 F_BMEP = scatteredInterpolant(RPM_input',T_input',BMEP','natural','none');
@@ -166,11 +174,11 @@ figure
 mesh(RPMq,Tq,q_BMEP);
 xlabel('RPM [1/min]');
 ylabel('Torque [Nm]');
-title('bmep');
+title('bmep [Pa]');
 cc=colorbar;
 grid
-% set(cc, 'Fontsize', 20)
-% set(gca,'FontSize',20)
+hold on
+plot3(RPM_input,T_input,BMEP*1.5,'k.');
 
 %fmep
 F_FMEP = scatteredInterpolant(RPM_input',T_input',FMEP','natural','none');
@@ -180,8 +188,22 @@ figure
 mesh(RPMq,Tq,q_FMEP);
 xlabel('RPM [1/min]');
 ylabel('Torque [Nm]');
-title('fmep');
+title('fmep [Pa]');
 cc=colorbar;
 grid
-% set(cc, 'Fontsize', 20)
-% set(gca,'FontSize',20)
+hold on
+plot3(RPM_input,T_input,FMEP*1.5,'k.');
+
+%brake eff
+F_effbrake = scatteredInterpolant(RPM_input',T_input',eff_brake','natural','none');
+q_effbrake = F_effbrake(RPMq,Tq);
+
+figure
+mesh(RPMq,Tq,q_effbrake);
+xlabel('RPM [1/min]');
+ylabel('Torque [Nm]');
+title('Brake efficiency [-]');
+cc=colorbar;
+grid
+hold on
+plot3(RPM_input,T_input,eff_brake*1.5,'k.');

@@ -2,19 +2,19 @@ function [HRR] = wiebefunctions(Ca)
 CA = Ca;
 %CA = -360:360;
 
-% load('currentCase.mat');
-% mode = currentCase.mode;
+load('currentCase.mat');
+mode = currentCase.mode;
 
 %Per phase
 
-global f a dCA mode  w EGRf T
+
 if strcmp(mode,'case')
     % Do wiebe with case data
-%     f = currentCase.f;
-%     a = currentCase.a;
-%     nP = currentCase.n;
-%     dCA = currentCase.dCA;
-    CAI = CAign;
+    f = currentCase.f;
+    a = currentCase.a;
+    nP = currentCase.n;
+    dCA = currentCase.dCA;
+    CAI = currentCase.CAign;
     
     Premix = SingleWiebe(CA,a(1),nP(1),dCA(1),CAI(1));
     Mixing = SingleWiebe(CA,a(2),nP(2),dCA(2),CAI(2));
@@ -23,9 +23,9 @@ if strcmp(mode,'case')
     
 elseif strcmp(mode,'couple')
     % Do wiebe with parametrization
-%     T = currentCase.T;
-%     w = currentCase.w;
-%     EGRf= currentCase.EGRf;
+    T = currentCase.T;
+    w = currentCase.w;
+    EGRf= currentCase.EGRf;
     EOIt = deg2rad(-2+22*T/2600)/w*1000;    %[ms]!!
     INJ_durt = 0.5+3*T/2600;                %[ms]
     SOIt = EOIt-INJ_durt;                   %[ms]
