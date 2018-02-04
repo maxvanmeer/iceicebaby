@@ -50,7 +50,7 @@ end
 %% Add path to general functions and set Runiv
 addpath('General');
 global Runiv SpS QLHV
-global CA05 CA10 CA50 CA90 CA95 BDUR
+global CA01 CA05 CA10 CA50 CA90 CA95 BDUR
 Runiv = 8.3144598;
 %% Datadir just to show how you can organize output
 DataDir = 'output';
@@ -74,7 +74,7 @@ Bore    = 130*mm;                   % bore
 rc      = 17.45;                    % compression ratio
 VDisp   = pi*(Bore/2)^2*Stroke;     % Displacement Volume
 if strcmp(mode,'case')
-    N       = allCases(iCase-121).RPM_act;          % RPM
+    N       = allCases(iCase-121).RPM_act;          % N represents the RPM
 elseif strcmp(mode,'couple')
     N = w/(2*pi)*60; %revs/s
     
@@ -146,8 +146,6 @@ if strcmp(mode,'case')
     AF      = AFstoi*lambda;
     EGRf = allCases(iCase-121).EGRf/100;
 elseif strcmp(mode,'couple')
-    %WAT IS QLHV????? Mogelijke oplossing gevonden maar vreemd. (zie
-    %wiebetest)
     QLHV=4.26e7;
 %     mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011);
 %     mair = (10.8e-3 + 28.4e-3 *T/2700);
@@ -159,7 +157,7 @@ elseif strcmp(mode,'couple')
     
     EGR = 20;
     EGRf = EGR/100;
-    Vd   = 6*pi*(Bore/2)^2*Stroke; % Displacement volume for all cylinders
+    Vd   = 6*pi*(Bore/2)^2*Stroke;                              % Displacement volume for all cylinders
     rho = (1+EGRf)*mair/Vd;
 end
 % Real AF ratio
@@ -176,7 +174,7 @@ Comb.QLHV    = QLHV;
 
 Int.T   = T_plenum;
 Exh.T   = T_exhaust;
-Int.Y   = (1-EGRf)*YReactants+EGRf*YProducts;                    % Applying EGR setpoint
+Int.Y   = (1-EGRf)*YReactants+EGRf*YProducts;                   % Applying EGR setpoint
 Exh.Y   = YProducts;
 Int.T   = T_plenum;
 Exh.T   = T_exhaust;
@@ -195,16 +193,15 @@ massfu  = Int.Y(1)*mass;
 Settings.N      = N;
 Settings.EGR    = EGRf;
 Settings.AF     = AF;
-Settings.Ncyc   = Ncyc;                                                     %Added info about the number of cycles
+Settings.Ncyc   = Ncyc;             %Added info about the number of cycles
 
 if strcmp(mode,'couple')
     p_plenum = rho*Rg*T_plenum;
-    p_exhaust = p_plenum+0.1*bara;                               % exhaust back-pressure
+    p_exhaust = p_plenum+0.1*bara;  % exhaust back-pressure
 end
 
 Int.Ca=CaI;Int.L=LI;Int.D=Di;Int.p=p_plenum;
 Exh.Ca=CaE;Exh.L=LE;Exh.D=De;Exh.p=p_exhaust;
-
 
 
 %% Set initial solution (it is an DAE problem so we must initialize)
@@ -224,12 +221,15 @@ for i = 1:length(HRR)
     %HR(i) = trapz(HRR(1:ReducedCA(i)));
     HR(i) = trapz(HRR(1:i));
 end
+
+% Useful and important Crank Angles determined from heat release rate:
+CA01 = ReducedCA(find(HR>0.01*HR(length(HR)),1)+1);
 CA05 = ReducedCA(find(HR>0.05*HR(length(HR)),1)+1);
-CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat ReducedCA van 0 tot 360 loopt en HR van 1 tot 360
+CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);
 CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
 CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
 CA95 = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1);
-BDUR = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1) - ReducedCA(find(HR>0.01*HR(length(HR)),1)+1);
+BDUR = CA90-CA01;
 
 %% Save current case to pass on to FtyDAE
 if strcmp(mode,'case')
@@ -252,9 +252,9 @@ save('currentCase.mat','currentCase');
 tspan=t;
 odopt=odeset('RelTol',1e-4,'Mass',@MassDAE,'MassSingular','yes');           % Set solver settings (it is a DAE so ...,'MassSingular','yes')
 tic;
-Qheatloss = 0;
+Qheatloss = 0;      % Total amount of heat lost during the simulation
 [time,y]=ode15s(@FtyDAE,tspan,y0,odopt);                                    % Take a specific solver
-disp(Qheatloss);    % Remove comment to display total amount of heat lost for a single complete case
+% disp(Qheatloss);    % Remove comment to display total amount of heat lost for a single complete case
 tel=toc;
 fprintf('Spent time %9.2f (solver %s)\n',tel,'ode15s');
 
@@ -268,6 +268,7 @@ elseif strcmp(mode,'couple')
     
 end
 
+% Saves the complete data to the chosen case name:
 SaveName = fullfile(DataDir,CaseName);
 V = CylVolumeFie(time);
 save(SaveName,'Settings','Cyl','Int','Exh','Comb','time','y','yNames','V','SpS','HRR','CA10','CA50','CA90','BDUR','mode','HRR');
