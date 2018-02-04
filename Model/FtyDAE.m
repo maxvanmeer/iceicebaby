@@ -3,11 +3,9 @@ global Int Exh QLHV SpS Runiv omega Qheatloss dt
 global  mfuIVCClose si EtaComb Bore Stroke rc CA50 BDUR SOC EOC
 
 Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny. 
-Tpiston = 273+110;  %110 degrees Celsius is a guess, based on the normal temperature of engine oil (which cools the pistons). NOT SURE.
-% alfa    = 500;
-
-VDisp   = pi*(Bore/2)^2*Stroke;
-Vc      = VDisp/(rc-1);
+Tpiston = 273+110;  %110 degrees Celsius is an estimation, based on the normal temperature of engine oil (which cools the pistons). 
+VDisp   = pi*(Bore/2)^2*Stroke; %Displacement volume
+Vc      = VDisp/(rc-1);         %Closed volume
 
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
@@ -21,11 +19,11 @@ m = sum(mi);
 [V,dVdt,A,A_c,A_p]=CylVolumeFie(t);
 Yi = [mi/m]';
 %%
-Ca          = time2ang(t,omega)/(2*pi)*360;
-reducedCa   = mod(Ca+360,720)-360;
-CADS        = omega/(2*pi)*360;
-%%
-for ii=1:Nsp
+Ca          = time2ang(t,omega)/(2*pi)*360; %Crankangle vector for the entire simulation time
+reducedCa   = mod(Ca+360,720)-360;          %Crankangle for one cycle
+CADS        = omega/(2*pi)*360;             %Rotational speed in degrees per second
+%% Taking parameters from NASA database
+for ii=1:Nsp                    
     hi(ii) = HNasa(T,SpS(ii));
     ei(ii) = ENasa(T,SpS(ii));
     Cpi(ii) = CpNasa(T,SpS(ii));
@@ -93,8 +91,6 @@ else
     Exh.Y = YE;
 end
 dmidt       = [YI*dmdtI + YE*dmdtE]';
-%dmfuComb    = EtaComb*mfuIVCClose*pdf(GaussatCA50,reducedCa)*CADS;
-% dmfuComb    = EtaComb*mfuel*wiebefunctions(reducedCa)*CADS;
 dmfuComb    = EtaComb*mfuIVCClose*wiebefunctions(reducedCa)*CADS;
 
 dmidt_c     = si'*dmfuComb;
@@ -102,22 +98,23 @@ dmidt       = dmidt - dmidt_c;
 dQcomb      = QLHV*dmfuComb;
 dQcomb_real = ei*dmidt_c;
 
-%% Woschni heatloss
-%normal model
-% CA50=10;                        % CA50 (50% HR), replace with 
+%% Woschni heat loss
 load('currentCase.mat');
 HR = currentCase.HR;
 ReducedCA = -360:360;
 
-CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat ReducedCA van 0 tot 360 loopt en HR van 1 tot 360
+% Useful and important Crank Angles determined from heat release rate:
+CA01 = ReducedCA(find(HR>0.01*HR(length(HR)),1)+1); 
+CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);
 CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
 CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
-% BDUR=20;                        % Burn Duration, replace with data case
-BDUR = CA90-CA10;
-CAign = CA50-0.5*BDUR;
-CAend = CAign+BDUR;
-SOC = CA10;
-EOC = CA90;
+BDUR = CA90-CA01;   
+
+%Start and end of ignition timings are required as input for woschni heat loss:
+% SOC = CA50-0.5*BDUR;    % Previously, the Gaussian values were used to calculate these timings
+% EOC = CA50+0.5*BDUR;
+SOC = CA01;     % Now, the timings are update to work with the Wiebe method of combustion
+EOC = CA90;  
 
 V0      = CylVolumeFie(t(1));   % Reference values for V, T, p, used for Woschni
 T0      = 320;                  % Plenum temperature

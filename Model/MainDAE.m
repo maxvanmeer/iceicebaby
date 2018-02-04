@@ -1,18 +1,19 @@
 function MainDAE(varargin)
 %% MainDAE %%
-% The MainDAE file is able to run both a single case, or a T-w couple
-%If you only want to run a case
-%1st arg: iCase
+% The MainDAE file is able to run both a single case, or a T-w couple.
 
-%If you want to run a T-w couple:
-%1st arg: T [Nm]
-%2nd arg: w [rad/s]
+%If you only want to run a case, type MainDAE(iCase) into the command window
+
+%If you want to run a T-w couple, type MainDAE(T,w) into the command window
+%1st arg: Input torque  T  in [Nm]
+%2nd arg: Angular velocity  w  in [rad/s]
 
 %Give only one argument if you want to use a case, or two arguments if you
 %want to use a T-w couple
 
+%Running the model manually runs the default case which is defined here:
 mode = 'case';
-defaultCase = 131; % In case you want to run this file directly
+defaultCase = 122; % In case you want to run this file directly
 
 if nargin == 0
     iCase = defaultCase;
@@ -253,7 +254,7 @@ odopt=odeset('RelTol',1e-4,'Mass',@MassDAE,'MassSingular','yes');           % Se
 tic;
 Qheatloss = 0;
 [time,y]=ode15s(@FtyDAE,tspan,y0,odopt);                                    % Take a specific solver
-% disp(Qheatloss);    % Remove comment to display total amount of heat lost after running a case
+disp(Qheatloss);    % Remove comment to display total amount of heat lost for a single complete case
 tel=toc;
 fprintf('Spent time %9.2f (solver %s)\n',tel,'ode15s');
 
