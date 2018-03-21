@@ -137,9 +137,7 @@ dt      = t(100)-t(99);
 CADS    = omega/(2*pi)*360;
 %% Compute initial conditions and intake/exhaust composition
 V0      = CylVolumeFie(t(1));
-T0      = 273;
-p0      = 3.5*bara;                                             % Typical full load set point
-
+T0      = T_plenum;
 
 if strcmp(mode,'case')
     lambda  = allCases(iCase-121).lambda_AF;
@@ -147,18 +145,18 @@ if strcmp(mode,'case')
     EGRf = allCases(iCase-121).EGRf/100;
 elseif strcmp(mode,'couple')
     QLHV=4.26e7;
-%     mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011);
-%     mair = (10.8e-3 + 28.4e-3 *T/2700);
-    mfuel = 2*pi*T/(0.46*QLHV);
-    mair = 2.7e-3 +(9.8-2.7)*1e-3*T/2700;
+    mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011)/6;               % /6, values are for 6 cylinders
+    mair = (10.8e-3 + 28.4e-3 *T/2700)/6;                   % From hints, causes low p_plenum (26%)
+%     mfuel = 2*pi*T/(2*0.46*QLHV) + 0.000027;                % NOT /6, mfuel and mair for 1 cylinder
+%     mair = 2.7e-3 + 6.9e-3*T/2700;                          % From slides, causes high p_plenum (15%)
 
     AF = mair/mfuel;
     lambda = AF/AFstoi;
     
     EGR = 20;
     EGRf = EGR/100;
-    Vd   = 6*pi*(Bore/2)^2*Stroke;                              % Displacement volume for all cylinders
-    rho = (1+EGRf)*mair/Vd;
+    Vd   = pi*(Bore/2)^2*Stroke;                              % Displacement volume for all cylinders
+    rho = (1+EGRf)*mair/Vd
 end
 % Real AF ratio
 
@@ -188,17 +186,20 @@ for ii=1:Nsp
 end
 Mave    = 1/sum([Int.Y]./Mi);
 Rg      = Runiv/Mave;
+
+if strcmp(mode,'couple')
+    p_plenum = rho*Rg*T_plenum
+    p_exhaust = p_plenum+0.1*bara;  % exhaust back-pressure
+end
+
+p0 = p_plenum;
+
 mass    = p0*V0/Rg/T0;
 massfu  = Int.Y(1)*mass;
 Settings.N      = N;
 Settings.EGR    = EGRf;
 Settings.AF     = AF;
 Settings.Ncyc   = Ncyc;             %Added info about the number of cycles
-
-if strcmp(mode,'couple')
-    p_plenum = rho*Rg*T_plenum;
-    p_exhaust = p_plenum+0.1*bara;  % exhaust back-pressure
-end
 
 Int.Ca=CaI;Int.L=LI;Int.D=Di;Int.p=p_plenum;
 Exh.Ca=CaE;Exh.L=LE;Exh.D=De;Exh.p=p_exhaust;
