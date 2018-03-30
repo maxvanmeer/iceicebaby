@@ -2,12 +2,15 @@ function [yp] = FtyDAE( t,y )
 global Int Exh QLHV SpS Runiv omega
 global  mfuIVCClose si EtaComb Bore Stroke rc CA50 BDUR SOC EOC
 
-Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny. 
+Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny.
 Tpiston = 273+110;  %110 degrees Celsius is a guess, based on the normal temperature of engine oil (which cools the pistons). NOT SURE.
 % alfa    = 500;
 
 VDisp   = pi*(Bore/2)^2*Stroke;
 Vc      = VDisp/(rc-1);
+
+load('currentCase.mat');
+
 
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
@@ -67,7 +70,7 @@ StateExhaust.T      = TE;
 YY                  = [Exh.Y];
 Ma                  = 1/(sum(YY./Mi));
 Rg                  = Runiv/Ma;
-hpE                 = YY*hE';       
+hpE                 = YY*hE';
 StateExhaust.rho    = pE/TE/Rg;
 CpE                 = YY*CpiE';
 StateExhaust.gamma   = CpE/(CpE-Rg);
@@ -95,7 +98,31 @@ end
 dmidt       = [YI*dmdtI + YE*dmdtE]';
 %dmfuComb    = EtaComb*mfuIVCClose*pdf(GaussatCA50,reducedCa)*CADS;
 % dmfuComb    = EtaComb*mfuel*wiebefunctions(reducedCa)*CADS;
-dmfuComb    = EtaComb*mfuIVCClose*wiebefunctions(reducedCa)*CADS;
+
+
+global Torque w TSOI PSOI haveToSetSOI
+EOIt = deg2rad(-2+22*Torque/2600)/w*1000;    %[ms]!!
+INJ_durt = 0.5+3*Torque/2600;                %[ms]
+SOIt = EOIt-INJ_durt;                   %[ms]
+SOId = rad2deg((SOIt/1000)*w);          %[CAD]
+EOId = rad2deg((EOIt/1000)*w);          %[CAD]
+
+
+if strcmp(currentCase.mode,'couple')
+    if reducedCa <= -350
+        haveToSetSOI = true;
+    end
+    if reducedCa >= SOId && haveToSetSOI == true% You're after start of injection
+        TSOI = T;
+        PSOI = p*1e-5;
+        haveToSetSOI = false;
+    end
+end
+
+
+
+dmfuComb    = EtaComb*mfuIVCClose*wiebefunctions(reducedCa,TSOI,PSOI)*CADS;
+
 
 dmidt_c     = si'*dmfuComb;
 dmidt       = dmidt - dmidt_c;
@@ -104,8 +131,7 @@ dQcomb_real = ei*dmidt_c;
 
 %% Woschni heatloss
 %normal model
-% CA50=10;                        % CA50 (50% HR), replace with 
-load('currentCase.mat');
+% CA50=10;                        % CA50 (50% HR), replace with
 HR = currentCase.HR;
 ReducedCA = -360:360;
 
@@ -119,13 +145,15 @@ CAend = CAign+BDUR;
 SOC = CAign;
 EOC = CAend;
 
+
 V0      = CylVolumeFie(t(1));
 T0      = 273;
 p0      = 3.5*10^5;
 
-pm = ((VDisp+Vc)/(V))^gamma * p0;      
+pm = ((VDisp+Vc)/(V))^gamma * p0;
 
 alfa = alfaWoschni(reducedCa,T,p,pm,T0,p0,V0);
+
 
 dQhl = alfa*(A_c*(Twall-T)+A_p*(Tpiston-T));
 

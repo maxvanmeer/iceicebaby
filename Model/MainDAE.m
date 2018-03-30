@@ -12,6 +12,8 @@ function MainDAE(varargin)
 mode = 'case';
 defaultCase = 124; % In case you want to run this file directly
 
+global w Torque
+
 if nargin == 0
     iCase = defaultCase;
     
@@ -21,6 +23,8 @@ elseif nargin == 1 % Run a specific case
 elseif nargin ==3
     T = varargin{1};
     w = varargin{2};
+    Torque = T;
+
     paramNumber = varargin{3};
     mode = 'couple';
     
@@ -28,6 +32,8 @@ elseif nargin ==3
 elseif nargin==2
     T=varargin{1};
     w=varargin{2};
+    Torque = T;
+
     paramNumber=1;
     mode = 'couple';
 end
@@ -43,6 +49,7 @@ switch mode
     case 'couple'
         disp(['Running couple T=',num2str(T),' w=',num2str(w),'...']);
 end
+
 
 %% Add path to general functions and set Runiv
 addpath('General');
@@ -70,6 +77,12 @@ Stroke  = 158*mm;                   % stroke
 Bore    = 130*mm;                   % bore
 rc      = 17.45;                    % compression ratio
 VDisp   = pi*(Bore/2)^2*Stroke;     % Displacement Volume
+
+global TSOI PSOI haveToSetSOI
+TSOI = 975; % Will be overwritten
+PSOI = 58.8; %idem 
+haveToSetSOI = true;
+
 if strcmp(mode,'case')
     N       = allCases(iCase-121).RPM_act;          % RPM
 elseif strcmp(mode,'couple')
@@ -132,9 +145,8 @@ tcyc    = (2/REVS);
 t       = [0:0.1:360]./360*tcyc*Ncyc;
 CADS    = omega/(2*pi)*360;
 %% Compute initial conditions and intake/exhaust composition
-V0      = CylVolumeFie(t(1));
+V0      = CylVolumeFie(t(1))
 T0      = 273;
-p0      = 3.5*bara;                                             % Typical full load set point
 
 
 if strcmp(mode,'case')
@@ -145,18 +157,23 @@ elseif strcmp(mode,'couple')
     %WAT IS QLHV????? Mogelijke oplossing gevonden maar vreemd. (zie
     %wiebetest)
     QLHV=4.26e7;
-%     mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011);
-%     mair = (10.8e-3 + 28.4e-3 *T/2700);
-    mfuel = 2*pi*T/(0.46*QLHV);
-    mair = 2.7e-3 +(9.8-2.7)*1e-3*T/2700;
+    T
+    mfuel = (2*pi*T/(2*0.46*QLHV)+0.000027)/6
+    mair = (2.7e-3+6.9E-3*T/2700)/6
+%     mair = (10.8e-3 + 28.4e-3 *T/2700)/6
+    
+    
+%     mfuel = 2*pi*T/(0.46*QLHV)/6
+%     mair = (2.7e-3 +(9.8-2.7)*1e-3*T/2700)/6
 
-    AF = mair/mfuel;
+    AF = mair/mfuel
     lambda = AF/AFstoi;
     
     EGR = 20;
     EGRf = EGR/100;
-    Vd   = 6*pi*(Bore/2)^2*Stroke; % Displacement volume for all cylinders
-    rho = (1+EGRf)*mair/Vd;
+    Vd   = pi*(Bore/2)^2*Stroke % Displacement volume
+    CylVolumeFie(1)
+    rho = (1+EGRf)*mair/Vd
 end
 % Real AF ratio
 
@@ -185,18 +202,23 @@ for ii=1:Nsp
     Exh.Cp(ii)  = CpNasa(Exh.T,SpS(ii));
 end
 Mave    = 1/sum([Int.Y]./Mi);
-Rg      = Runiv/Mave;
-mass    = p0*V0/Rg/T0;
-massfu  = Int.Y(1)*mass;
+Rg      = Runiv/Mave
+
+if strcmp(mode,'couple')
+    p_plenum = rho*Rg*T_plenum
+    p_exhaust = p_plenum+0.1*bara;                               % exhaust back-pressure
+end
+
+% p0      = 3.5*bara;                                             % Typical full load set point
+p0 = p_plenum;
+mass    = p0*V0/Rg/T_plenum
+massfu  = Int.Y(1)*mass
 Settings.N      = N;
 Settings.EGR    = EGRf;
 Settings.AF     = AF;
 Settings.Ncyc   = Ncyc;                                                     %Added info about the number of cycles
 
-if strcmp(mode,'couple')
-    p_plenum = rho*Rg*T_plenum;
-    p_exhaust = p_plenum+0.1*bara;                               % exhaust back-pressure
-end
+
 
 Int.Ca=CaI;Int.L=LI;Int.D=Di;Int.p=p_plenum;
 Exh.Ca=CaE;Exh.L=LE;Exh.D=De;Exh.p=p_exhaust;
@@ -213,7 +235,7 @@ mfuIVCClose     = y0(3);
 %% Computing CA values
 
 ReducedCA = -360:360;
-HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA);
+HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA,TSOI,PSOI);
 % HRR = EtaComb*QLHV*mfuel*wiebefunctions(ReducedCA);
 
 for i = 1:length(HRR)
