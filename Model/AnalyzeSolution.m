@@ -14,7 +14,7 @@ mm=1e-3;cm=1e-2;dm=0.1;
 J = 1/(3.6e6);
 liter = dm^3;
 %% Select a loadcase
-iCase = 131;                                                                 %1 for standard, 2 for adjusted
+iCase = 122;        % Select a case to be analyzed
 CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
 CaseName = 'paramCase001.mat'; % For debugging
 SaveName = fullfile(DataDir,CaseName);
@@ -25,14 +25,11 @@ whos
 iSpSel = [3 4 6 7]; % Skip N2
 t=time;p = y(:,1);T=y(:,2);mi=y(:,iSpSel);
 
- 
 RPM = Settings.N;
-
 
 REVS = RPM/60;trev = 1/REVS;nREVS = (t(end)-t(1))/trev; 
 it = find(t > (nREVS-2)*trev & t <= nREVS*trev); % Last cycle
 % it = find(t > (0)*trev & t <= 2*trev);
-
 
 % indices for all cycles in the simulation
 i_per_cycle = length(t)/(nREVS/2);
@@ -41,8 +38,7 @@ i_per_cycle = length(t)/(nREVS/2);
      it_all(:,i) = iti;
  end
  
- 
- for i=1:size(it_all,2)
+  for i=1:size(it_all,2)
     ittt = it_all(:,i);
     [valueA, i_compA] = min(abs(V(ittt)));
     ppA = p(ittt);
@@ -58,8 +54,8 @@ pp = p(it);
 Tp = T(it);
 mip = mi(it,:);
 
- tp_all = t(it_all);
- pp_all = p(it_all);
+tp_all = t(it_all);
+pp_all = p(it_all);
 
 %% Pressure, Temperature and mass of component diagram
 figure(1)
@@ -122,7 +118,6 @@ end
 dummy = find(t > (nREVS-1.25)*trev); % I guess this is after IVC and before combustion. There are better ways.
 index = dummy(1);
 mfuel = mi(index,1);% fuel mass after intake valve close (just before combustion starts for instance)
-
 
 
 figure(1)

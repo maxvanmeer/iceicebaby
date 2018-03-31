@@ -17,11 +17,13 @@ Sp  = 2 * Stroke * omega / 2 / pi;
 fac = VDisp*Tr/pr/Vr;     
 
 w   = C1*Sp+C2*fac*(p-pm);
-if (w<0)
-   w=C1*Sp; 
+if (p-pm<0)     % If w becomes negative, a computation error occurs
+   w=C1*Sp;     % It is assumed that p-pm should always be greater than zero
 end
 
 C = 3.26;
 m = 0.8;
-alfa = C*Bore^(m-1)*(p/1000)^m*w^m*T^(0.75-1.62*m);
 
+alfa = C*Bore^(m-1)*(p/1000)^m*w^m*T^(0.75-1.62*m); %final heat transfer coefficient
+
+end

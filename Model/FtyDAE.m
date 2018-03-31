@@ -1,5 +1,5 @@
 function [yp] = FtyDAE( t,y )
-global Int Exh QLHV SpS Runiv omega
+global Int Exh QLHV SpS Runiv omega Qheatloss dt
 global  mfuIVCClose si EtaComb Bore Stroke rc CA50 BDUR SOC EOC
 
 Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny.
@@ -24,11 +24,11 @@ m = sum(mi);
 [V,dVdt,A,A_c,A_p]=CylVolumeFie(t);
 Yi = [mi/m]';
 %%
-Ca          = time2ang(t,omega)/(2*pi)*360;
-reducedCa   = mod(Ca+360,720)-360;
-CADS        = omega/(2*pi)*360;
-%%
-for ii=1:Nsp
+Ca          = time2ang(t,omega)/(2*pi)*360; %Crankangle vector for the entire simulation time
+reducedCa   = mod(Ca+360,720)-360;          %Crankangle for one cycle
+CADS        = omega/(2*pi)*360;             %Rotational speed in degrees per second
+%% Taking parameters from NASA database
+for ii=1:Nsp                    
     hi(ii) = HNasa(T,SpS(ii));
     ei(ii) = ENasa(T,SpS(ii));
     Cpi(ii) = CpNasa(T,SpS(ii));
@@ -135,7 +135,9 @@ dQcomb_real = ei*dmidt_c;
 HR = currentCase.HR;
 ReducedCA = -360:360;
 
-CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);%Ze liggen een achter omdat ReducedCA van 0 tot 360 loopt en HR van 1 tot 360
+% Useful and important Crank Angles determined from heat release rate:
+CA01 = ReducedCA(find(HR>0.01*HR(length(HR)),1)+1); 
+CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);
 CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
 CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
 % BDUR=20;                        % Burn Duration, replace with data case
@@ -146,21 +148,28 @@ SOC = CAign;
 EOC = CAend;
 
 
-V0      = CylVolumeFie(t(1));
-T0      = 273;
-p0      = 3.5*10^5;
+% V0      = CylVolumeFie(t(1));
+% T0      = 273;
+% p0      = 3.5*10^5;
+global T_plenum p_plenum LCon
+Vmax = pi*(Bore/2)^2*Stroke/(rc-1)+(LCon+Stroke/2-0)*pi*(Bore/2)^2;                                  % Volume 
+
+V0 = Vmax;
+T0 = T_plenum;
+p0 = p_plenum;
+
 
 pm = ((VDisp+Vc)/(V))^gamma * p0;
 
 alfa = alfaWoschni(reducedCa,T,p,pm,T0,p0,V0);
+ 
+dQhl= alfa*(A_c*(Twall-T)+A_p*(Tpiston-T));
 
-
-dQhl = alfa*(A_c*(Twall-T)+A_p*(Tpiston-T));
-
+Qheatloss = Qheatloss + dQhl * dt;
+ 
 %% DAE formulation
 Rg = StateCyl.Rg;
 yp = [dQhl-p*dVdt+hpaI*dmdtI+hpaE*dmdtE;
     p*V-Rg*T*m;
     dmidt];
 end
-
