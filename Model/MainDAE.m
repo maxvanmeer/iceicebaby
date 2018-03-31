@@ -15,6 +15,8 @@ function MainDAE(varargin)
 mode = 'case';
 defaultCase = 122; % In case you want to run this file directly
 
+global w Torque
+
 if nargin == 0
     iCase = defaultCase;
     
@@ -24,6 +26,8 @@ elseif nargin == 1 % Run a specific case
 elseif nargin ==3
     T = varargin{1};
     w = varargin{2};
+    Torque = T;
+
     paramNumber = varargin{3};
     mode = 'couple';
     
@@ -31,6 +35,8 @@ elseif nargin ==3
 elseif nargin==2
     T=varargin{1};
     w=varargin{2};
+    Torque = T;
+
     paramNumber=1;
     mode = 'couple';
 end
@@ -46,6 +52,7 @@ switch mode
     case 'couple'
         disp(['Running couple T=',num2str(T),' w=',num2str(w),'...']);
 end
+
 
 %% Add path to general functions and set Runiv
 addpath('General');
@@ -73,6 +80,12 @@ Stroke  = 158*mm;                   % stroke
 Bore    = 130*mm;                   % bore
 rc      = 17.45;                    % compression ratio
 VDisp   = pi*(Bore/2)^2*Stroke;     % Displacement Volume
+
+global TSOI PSOI haveToSetSOI
+TSOI = 975; % Will be overwritten
+PSOI = 58.8; %idem 
+haveToSetSOI = true;
+
 if strcmp(mode,'case')
     N       = allCases(iCase-121).RPM_act;          % N represents the RPM
 elseif strcmp(mode,'couple')
@@ -138,6 +151,7 @@ CADS    = omega/(2*pi)*360;
 %% Compute initial conditions and intake/exhaust composition
 V0      = CylVolumeFie(t(1));
 T0      = T_plenum;
+% T0 = 273;
 
 if strcmp(mode,'case')
     lambda  = allCases(iCase-121).lambda_AF;
@@ -192,6 +206,7 @@ if strcmp(mode,'couple')
     p_exhaust = p_plenum+0.1*bara;  % exhaust back-pressure
 end
 
+% p0      = 3.5*bara;                                             % Typical full load set point
 p0 = p_plenum;
 
 mass    = p0*V0/Rg/T0;
@@ -200,6 +215,8 @@ Settings.N      = N;
 Settings.EGR    = EGRf;
 Settings.AF     = AF;
 Settings.Ncyc   = Ncyc;             %Added info about the number of cycles
+
+
 
 Int.Ca=CaI;Int.L=LI;Int.D=Di;Int.p=p_plenum;
 Exh.Ca=CaE;Exh.L=LE;Exh.D=De;Exh.p=p_exhaust;
@@ -215,7 +232,7 @@ mfuIVCClose     = y0(3);
 %% Computing CA values
 
 ReducedCA = -360:360;
-HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA);
+HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA,TSOI,PSOI);
 % HRR = EtaComb*QLHV*mfuel*wiebefunctions(ReducedCA);
 
 for i = 1:length(HRR)
@@ -253,9 +270,9 @@ save('currentCase.mat','currentCase');
 tspan=t;
 odopt=odeset('RelTol',1e-4,'Mass',@MassDAE,'MassSingular','yes');           % Set solver settings (it is a DAE so ...,'MassSingular','yes')
 tic;
-Vr = max(CylVolumeFie(t));
 Qheatloss = 0;      % Total amount of heat lost during the simulation
 alfaplot = [];
+Vr = max(CylVolumeFie(t));
 [time,y]=ode15s(@FtyDAE,tspan,y0,odopt);                                    % Take a specific solver
 % disp(Qheatloss);    % Remove comment to display total amount of heat lost for a single complete case
 % plot(0:max(time)/(length(alfaplot)-1):max(time),alfaplot); % Remove comment to display alfa values over time

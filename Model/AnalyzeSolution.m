@@ -16,7 +16,7 @@ liter = dm^3;
 %% Select a loadcase
 iCase = 122;        % Select a case to be analyzed
 CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
-% CaseName = 'paramCase101.mat'; % For debugging
+CaseName = 'paramCase001.mat'; % For debugging
 SaveName = fullfile(DataDir,CaseName);
 load(SaveName);
 fprintf('Read solution of Case %3i from %s\n',iCase,SaveName);
@@ -28,7 +28,7 @@ t=time;p = y(:,1);T=y(:,2);mi=y(:,iSpSel);
 RPM = Settings.N;
 
 REVS = RPM/60;trev = 1/REVS;nREVS = (t(end)-t(1))/trev; 
-it = find(t > (nREVS-2)*trev & t <= nREVS*trev);
+it = find(t > (nREVS-2)*trev & t <= nREVS*trev); % Last cycle
 % it = find(t > (0)*trev & t <= 2*trev);
 
 % indices for all cycles in the simulation
@@ -110,7 +110,6 @@ xlabel('log V [l]');ylabel('log p [bara]');
 W   = trapz(Vp,pp);     % Work, integral pdV
 Wcomp_exp = trapz(Vcomp_exp,pcomp_exp);
 W_pumploop = trapz(V_pumploop, p_pumploop);
-
 
 for i = 1:size(it_all,2)
     W_all(1,i) = trapz(Vp_all(:,i),pp_all(:,i));

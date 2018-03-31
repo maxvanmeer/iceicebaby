@@ -1,4 +1,4 @@
-function [HRR] = wiebefunctions(Ca)
+function [HRR] = wiebefunctions(Ca,TSOI,PSOI)
 CA = Ca;
 %CA = -360:360;
 
@@ -30,8 +30,8 @@ elseif strcmp(mode,'couple')
     INJ_durt = 0.5+3*T/2600;                %[ms]
     SOIt = EOIt-INJ_durt;                   %[ms]
     INJ_durd = rad2deg((INJ_durt/1000)*w);  %[CAD]
-    EOId = rad2deg((EOIt/1000)*w);          %[CAD]
     SOId = rad2deg((SOIt/1000)*w);          %[CAD]
+    EOId = rad2deg((EOIt/1000)*w);          %[CAD]
     % Parameters needed for dP = pressure common rail? Can also be used to
     % calculate QLHV if dP is assumed to be a certain value.
     QLHV = 4.26e7;
@@ -48,16 +48,16 @@ elseif strcmp(mode,'couple')
     %indication.
     
     %Argumentation for using these values can be found in 'Proof_TSOI_PSOI'
-    Temp = 975;                         %[K]
-    p = 58.8;                           %[bar]
-    
-    
+%     Temp = 975;                         %[K]
+%     p = 58.8;                           %[bar]
+    Temp = TSOI
+    p = PSOI
     %Premix
     AP=0.405;
     nP=0.623;
     TaP=2977;
     mP=0.173;
-    IDtP = AP*p^(-nP)*exp(TaP/Temp)*EGRf^mP; %[ms] Ignition Delay
+    IDtP = AP*p^(-nP)*exp(TaP/Temp)*EGRf^mP %[ms] Ignition Delay
     rt = IDtP / INJ_durt;   %[-]
     CAignP = rad2deg((SOIt+IDtP)/1000*w); % [deg=CAD]
     

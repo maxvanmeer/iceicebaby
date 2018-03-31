@@ -2,10 +2,15 @@ function [yp] = FtyDAE( t,y )
 global Int Exh QLHV SpS Runiv omega Qheatloss dt Vr p_plenum T_plenum alfaplot
 global  mfuIVCClose si EtaComb Bore Stroke rc CA50 BDUR SOC EOC p0
 
-Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny. 
-Tpiston = 273+110;  %110 degrees Celsius is an estimation, based on the normal temperature of engine oil (which cools the pistons). 
-VDisp   = pi*(Bore/2)^2*Stroke; %Displacement volume
-Vc      = VDisp/(rc-1);         %Closed volume
+Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny.
+Tpiston = 273+110;  %110 degrees Celsius is a guess, based on the normal temperature of engine oil (which cools the pistons). NOT SURE.
+% alfa    = 500;
+
+VDisp   = pi*(Bore/2)^2*Stroke;
+Vc      = VDisp/(rc-1);
+
+load('currentCase.mat');
+
 
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
@@ -65,7 +70,7 @@ StateExhaust.T      = TE;
 YY                  = [Exh.Y];
 Ma                  = 1/(sum(YY./Mi));
 Rg                  = Runiv/Ma;
-hpE                 = YY*hE';       
+hpE                 = YY*hE';
 StateExhaust.rho    = pE/TE/Rg;
 CpE                 = YY*CpiE';
 StateExhaust.gamma   = CpE/(CpE-Rg);
@@ -91,15 +96,42 @@ else
     Exh.Y = YE;
 end
 dmidt       = [YI*dmdtI + YE*dmdtE]';
-dmfuComb    = EtaComb*mfuIVCClose*wiebefunctions(reducedCa)*CADS;
+%dmfuComb    = EtaComb*mfuIVCClose*pdf(GaussatCA50,reducedCa)*CADS;
+% dmfuComb    = EtaComb*mfuel*wiebefunctions(reducedCa)*CADS;
+
+
+global Torque w TSOI PSOI haveToSetSOI
+EOIt = deg2rad(-2+22*Torque/2600)/w*1000;    %[ms]!!
+INJ_durt = 0.5+3*Torque/2600;                %[ms]
+SOIt = EOIt-INJ_durt;                   %[ms]
+SOId = rad2deg((SOIt/1000)*w);          %[CAD]
+EOId = rad2deg((EOIt/1000)*w);          %[CAD]
+
+
+if strcmp(currentCase.mode,'couple')
+    if reducedCa <= -350
+        haveToSetSOI = true;
+    end
+    if reducedCa >= SOId && haveToSetSOI == true% You're after start of injection
+        TSOI = T;
+        PSOI = p*1e-5;
+        haveToSetSOI = false;
+    end
+end
+
+
+
+dmfuComb    = EtaComb*mfuIVCClose*wiebefunctions(reducedCa,TSOI,PSOI)*CADS;
+
 
 dmidt_c     = si'*dmfuComb;
 dmidt       = dmidt - dmidt_c;
 dQcomb      = QLHV*dmfuComb;
 dQcomb_real = ei*dmidt_c;
 
-%% Woschni heat loss
-load('currentCase.mat');
+%% Woschni heatloss
+%normal model
+% CA50=10;                        % CA50 (50% HR), replace with
 HR = currentCase.HR;
 ReducedCA = -360:360;
 
@@ -108,13 +140,13 @@ CA01 = ReducedCA(find(HR>0.01*HR(length(HR)),1)+1);
 CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);
 CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
 CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
-BDUR = CA90-CA01;   
+% BDUR=20;                        % Burn Duration, replace with data case
+BDUR = CA90-CA10;
+CAign = CA50-0.5*BDUR;
+CAend = CAign+BDUR;
+SOC = CAign;
+EOC = CAend;
 
-%Start and end of ignition timings are required as input for woschni heat loss:
-% SOC = CA50-0.5*BDUR;    % Previously, the Gaussian values were used to calculate these timings
-% EOC = CA50+0.5*BDUR;
-SOC = CA01;     % Now, the timings are update to work with the Wiebe method of combustion
-EOC = CA90;  
 
 Tr      = T_plenum;             % Plenum temperature
 pr      = p_plenum;             % Plenum pressure
