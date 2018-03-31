@@ -1,6 +1,6 @@
 function [yp] = FtyDAE( t,y )
-global Int Exh QLHV SpS Runiv omega Qheatloss dt
-global  mfuIVCClose si EtaComb Bore Stroke rc CA50 BDUR SOC EOC
+global Int Exh QLHV SpS Runiv omega Qheatloss dt Vr p_plenum T_plenum alfaplot
+global  mfuIVCClose si EtaComb Bore Stroke rc CA50 BDUR SOC EOC p0
 
 Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny. 
 Tpiston = 273+110;  %110 degrees Celsius is an estimation, based on the normal temperature of engine oil (which cools the pistons). 
@@ -116,18 +116,19 @@ BDUR = CA90-CA01;
 SOC = CA01;     % Now, the timings are update to work with the Wiebe method of combustion
 EOC = CA90;  
 
-V0      = CylVolumeFie(t(1));   % Reference values for V, T, p, used for Woschni
-T0      = 320;                  % Plenum temperature
-p0      = 3.5*10^5;             % Plenum pressure
- 
-pm = ((VDisp+Vc)/(V))^gamma * p0;      
- 
-alfa = alfaWoschni(reducedCa,T,p,pm,T0,p0,V0);
- 
+Tr      = T_plenum;             % Plenum temperature
+pr      = p_plenum;             % Plenum pressure
+
+pm = ((VDisp+Vc)/(V))^gamma * p0;
+
+alfa = alfaWoschni(reducedCa,T,p,pm,Tr,pr,Vr);
+
+alfaplot = [alfaplot alfa];
+
 dQhl= alfa*(A_c*(Twall-T)+A_p*(Tpiston-T));
 
 Qheatloss = Qheatloss + dQhl * dt;
- 
+
 %% DAE formulation
 Rg = StateCyl.Rg;
 yp = [dQhl-p*dVdt+hpaI*dmdtI+hpaE*dmdtE;

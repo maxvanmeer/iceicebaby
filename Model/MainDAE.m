@@ -49,7 +49,7 @@ end
 
 %% Add path to general functions and set Runiv
 addpath('General');
-global Runiv SpS QLHV
+global Runiv SpS QLHV p_plenum T_plenum Vr
 global CA01 CA05 CA10 CA50 CA90 CA95 BDUR
 Runiv = 8.3144598;
 %% Datadir just to show how you can organize output
@@ -67,7 +67,7 @@ bara=1e5;
 mm=1e-3;cm=1e-2;dm=0.1;
 liter = dm^3;
 %% Set a few global variables
-global rc LCon Stroke Bore N omega Di De VDisp dt % Engine globals
+global rc LCon Stroke Bore N omega Di De VDisp dt p0 % Engine globals
 LCon    = 261.6*mm;                 % connecting rod length
 Stroke  = 158*mm;                   % stroke
 Bore    = 130*mm;                   % bore
@@ -82,7 +82,7 @@ end
 Cyl.LCon = LCon;Cyl.Stroke=Stroke;Cyl.Bore=Bore;Cyl.rc=rc;
 
 %% Simple combustion model settings (a gaussian distribution)
-global mfuIVCClose si EtaComb Qheatloss
+global mfuIVCClose si EtaComb Qheatloss alfaplot
 
 CA50=10;                        % Gaussian value, no longer relevant
 BDUR=20;                        % Gaussian value, no longer relevant
@@ -145,10 +145,10 @@ if strcmp(mode,'case')
     EGRf = allCases(iCase-121).EGRf/100;
 elseif strcmp(mode,'couple')
     QLHV=4.26e7;
-    mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011)/6;               % /6, values are for 6 cylinders
-    mair = (10.8e-3 + 28.4e-3 *T/2700)/6;                   % From hints, causes low p_plenum (26%)
-%     mfuel = 2*pi*T/(2*0.46*QLHV) + 0.000027;                % NOT /6, mfuel and mair for 1 cylinder
-%     mair = 2.7e-3 + 6.9e-3*T/2700;                          % From slides, causes high p_plenum (15%)
+%     mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011)/6;               % /6, values are for 6 cylinders
+%     mair = (10.8e-3 + 28.4e-3 *T/2700)/6;                   % From hints, causes low p_plenum (26%)
+    mfuel = 2*pi*T/(2*0.46*QLHV) + 0.000027;                % NOT /6, mfuel and mair for 1 cylinder
+    mair = 2.7e-3 + 6.9e-3*T/2700;                          % From slides, causes high p_plenum (15%)
 
     AF = mair/mfuel;
     lambda = AF/AFstoi;
@@ -156,7 +156,7 @@ elseif strcmp(mode,'couple')
     EGR = 20;
     EGRf = EGR/100;
     Vd   = pi*(Bore/2)^2*Stroke;                              % Displacement volume for all cylinders
-    rho = (1+EGRf)*mair/Vd
+    rho = (1+EGRf)*mair/Vd;
 end
 % Real AF ratio
 
@@ -188,7 +188,7 @@ Mave    = 1/sum([Int.Y]./Mi);
 Rg      = Runiv/Mave;
 
 if strcmp(mode,'couple')
-    p_plenum = rho*Rg*T_plenum
+    p_plenum = rho*Rg*T_plenum;
     p_exhaust = p_plenum+0.1*bara;  % exhaust back-pressure
 end
 
@@ -253,9 +253,12 @@ save('currentCase.mat','currentCase');
 tspan=t;
 odopt=odeset('RelTol',1e-4,'Mass',@MassDAE,'MassSingular','yes');           % Set solver settings (it is a DAE so ...,'MassSingular','yes')
 tic;
+Vr = max(CylVolumeFie(t));
 Qheatloss = 0;      % Total amount of heat lost during the simulation
+alfaplot = [];
 [time,y]=ode15s(@FtyDAE,tspan,y0,odopt);                                    % Take a specific solver
 % disp(Qheatloss);    % Remove comment to display total amount of heat lost for a single complete case
+% plot(0:max(time)/(length(alfaplot)-1):max(time),alfaplot); % Remove comment to display alfa values over time
 tel=toc;
 fprintf('Spent time %9.2f (solver %s)\n',tel,'ode15s');
 
