@@ -1,6 +1,6 @@
-function [yp] = FtyDAE( t,y )
+function [yp] = FtyDAE(t,y)
 global Int Exh QLHV SpS Runiv omega Qheatloss dt
-global  mfuIVCClose si EtaComb Bore Stroke rc CA50 BDUR SOC EOC
+global  mfuIVCClose si EtaComb Bore Stroke rc CA50 BDUR SOC EOC CAignP EOId
 
 Twall   = 273+80;   %80 degrees Celcius is on the lower side. Higher is better for the engine efficieny.
 Tpiston = 273+110;  %110 degrees Celsius is a guess, based on the normal temperature of engine oil (which cools the pistons). NOT SURE.
@@ -144,15 +144,21 @@ CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
 BDUR = CA90-CA10;
 CAign = CA50-0.5*BDUR;
 CAend = CAign+BDUR;
-SOC = CAign;
-EOC = CAend;
+
+if haveToSetSOI
+    SOC = CAign;
+    EOC = CAend;
+else
+    SOC = CAignP;
+    EOC = EOId;
+end
+
 
 
 % V0      = CylVolumeFie(t(1));
 % T0      = 273;
 % p0      = 3.5*10^5;
-global T_plenum p_plenum LCon
-Vmax = pi*(Bore/2)^2*Stroke/(rc-1)+(LCon+Stroke/2-0)*pi*(Bore/2)^2;                                  % Volume 
+global T_plenum p_plenum LCon Vmax
 
 V0 = Vmax;
 T0 = T_plenum;

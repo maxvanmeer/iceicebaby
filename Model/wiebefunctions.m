@@ -6,7 +6,7 @@ load('currentCase.mat');
 mode = currentCase.mode;
 
 %Per phase
-
+global CAignP EOId
 
 if strcmp(mode,'case')
     % Do wiebe with case data
@@ -50,14 +50,14 @@ elseif strcmp(mode,'couple')
     %Argumentation for using these values can be found in 'Proof_TSOI_PSOI'
 %     Temp = 975;                         %[K]
 %     p = 58.8;                           %[bar]
-    Temp = TSOI
-    p = PSOI
+    Temp = TSOI;
+    p = PSOI;
     %Premix
     AP=0.405;
     nP=0.623;
     TaP=2977;
     mP=0.173;
-    IDtP = AP*p^(-nP)*exp(TaP/Temp)*EGRf^mP %[ms] Ignition Delay
+    IDtP = AP*p^(-nP)*exp(TaP/Temp)*EGRf^mP; %[ms] Ignition Delay
     rt = IDtP / INJ_durt;   %[-]
     CAignP = rad2deg((SOIt+IDtP)/1000*w); % [deg=CAD]
     

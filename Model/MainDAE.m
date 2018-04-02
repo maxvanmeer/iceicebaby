@@ -13,6 +13,7 @@ function MainDAE(varargin)
 
 %Running the model manually runs the default case which is defined here:
 mode = 'case';
+load('cases.mat');
 defaultCase = 122; % In case you want to run this file directly
 
 global w Torque
@@ -74,7 +75,7 @@ bara=1e5;
 mm=1e-3;cm=1e-2;dm=0.1;
 liter = dm^3;
 %% Set a few global variables
-global rc LCon Stroke Bore N omega Di De VDisp dt p_plenum T_plenum % Engine globals
+global rc LCon Stroke Bore N omega Di De VDisp dt p_plenum T_plenum Vmax % Engine globals
 LCon    = 261.6*mm;                 % connecting rod length
 Stroke  = 158*mm;                   % stroke
 Bore    = 130*mm;                   % bore
@@ -146,6 +147,7 @@ REVS    = N/60;
 omega   = REVS*2*pi;
 tcyc    = (2/REVS);
 t       = [0:0.1:360]./360*tcyc*Ncyc;
+Vmax    = max(CylVolumeFie(t));
 dt      = t(100)-t(99);
 CADS    = omega/(2*pi)*360;
 %% Compute initial conditions and intake/exhaust composition
@@ -170,7 +172,7 @@ elseif strcmp(mode,'couple')
     EGR = 20;
     EGRf = EGR/100;
     Vd   = pi*(Bore/2)^2*Stroke;                              % Displacement volume for all cylinders
-    rho = (1+EGRf)*mair/Vd
+    rho = (1+EGRf)*mair/Vd;
 end
 % Real AF ratio
 
@@ -229,25 +231,6 @@ for i=3:3+length(Names)-1
     yNames{i}=char(Names(i-2));
 end
 mfuIVCClose     = y0(3);
-%% Computing CA values
-
-ReducedCA = -360:360;
-HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA,TSOI,PSOI);
-% HRR = EtaComb*QLHV*mfuel*wiebefunctions(ReducedCA);
-
-for i = 1:length(HRR)
-    %HR(i) = trapz(HRR(1:ReducedCA(i)));
-    HR(i) = trapz(HRR(1:i));
-end
-
-% Useful and important Crank Angles determined from heat release rate:
-CA01 = ReducedCA(find(HR>0.01*HR(length(HR)),1)+1);
-CA05 = ReducedCA(find(HR>0.05*HR(length(HR)),1)+1);
-CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);
-CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
-CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
-CA95 = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1);
-BDUR = CA90-CA01;
 
 %% Save current case to pass on to FtyDAE
 if strcmp(mode,'case')
@@ -260,15 +243,38 @@ elseif strcmp(mode,'couple')
     currentCase.T_plenum=T_plenum;
     currentCase.w = w;
 end
-currentCase.HR = HR;
 
 currentCase.mode = mode;
 save('currentCase.mat','currentCase');
 
 
+%% Computing CA values
+
+ReducedCA = -360:360;
+HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA,TSOI,PSOI);
+% HRR = EtaComb*QLHV*mfuel*wiebefunctions(ReducedCA);
+
+for i = 1:length(HRR)
+    %HR(i) = trapz(HRR(1:ReducedCA(i)));
+    HR(i) = trapz(HRR(1:i));
+end
+
+currentCase.HR = HR;
+save('currentCase.mat','currentCase');
+
+% Useful and important Crank Angles determined from heat release rate:
+CA01 = ReducedCA(find(HR>0.01*HR(length(HR)),1)+1);
+CA05 = ReducedCA(find(HR>0.05*HR(length(HR)),1)+1);
+CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);
+CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
+CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
+CA95 = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1);
+BDUR = CA90-CA01;
+
+
 %% Solving the DAE system
 tspan=t;
-odopt=odeset('RelTol',1e-4,'Mass',@MassDAE,'MassSingular','yes');           % Set solver settings (it is a DAE so ...,'MassSingular','yes')
+odopt=odeset('RelTol',1e-5,'Mass',@MassDAE,'MassSingular','yes');           % Set solver settings (it is a DAE so ...,'MassSingular','yes')
 tic;
 Qheatloss = 0;      % Total amount of heat lost during the simulation
 [time,y]=ode15s(@FtyDAE,tspan,y0,odopt);                                    % Take a specific solver

@@ -1,4 +1,9 @@
 function [M] = MassDAE( t,y )
+
+% if isnan(y(1))
+%     M = zeros(7);
+%     return;
+% end
 global SpS
 % Mass matrix belonging to MainDAE
 %   Determines M of M dydt= Fty;
