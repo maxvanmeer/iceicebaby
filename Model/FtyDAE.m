@@ -154,25 +154,24 @@ else
 end
 
 
+Tr      = T_plenum;             % Plenum temperature
+pr      = p_plenum;             % Plenum pressure
 
 % V0      = CylVolumeFie(t(1));
 % T0      = 273;
 % p0      = 3.5*10^5;
 global T_plenum p_plenum LCon Vmax
 
-V0 = Vmax;
-T0 = T_plenum;
-p0 = p_plenum;
-
-
 pm = ((VDisp+Vc)/(V))^gamma * p0;
 
-alfa = alfaWoschni(reducedCa,T,p,pm,T0,p0,V0);
- 
+alfa = alfaWoschni(reducedCa,T,p,pm,Tr,pr,Vr);
+
+alfaplot = [alfaplot alfa];
+
 dQhl= alfa*(A_c*(Twall-T)+A_p*(Tpiston-T));
 
 Qheatloss = Qheatloss + dQhl * dt;
- 
+
 %% DAE formulation
 Rg = StateCyl.Rg;
 yp = [dQhl-p*dVdt+hpaI*dmdtI+hpaE*dmdtE;
