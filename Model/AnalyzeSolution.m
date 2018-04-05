@@ -16,7 +16,7 @@ liter = dm^3;
 %% Select a loadcase
 iCase = 122;        % Select a case to be analyzed
 CaseName = ['Case' num2str(iCase,'%3.3i') '.mat'];
-CaseName = 'paramCase127.mat'; % For debugging
+CaseName = 'paramCase905.mat'; % For debugging
 SaveName = fullfile(DataDir,CaseName);
 load(SaveName);
 fprintf('Read solution of Case %3i from %s\n',iCase,SaveName);

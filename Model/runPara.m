@@ -24,15 +24,21 @@ omega = 2*pi*RPM/60;
 n=1;
 RPM_input=[];
 T_input=[];
+mistakes = [];
 for i=1:length(omega)
     for j=1:length(T)
-        MainDAE(T(j),omega(i),n);
+        try
+            MainDAE(T(j),omega(i),n);
+        catch
+            disp(['Error occured on case ',num2str(n),' with T=',num2str(T(j)),' w=',num2str(omega(i))]);
+            mistakes = [mistakes n];
+        end
         RPM_input(n) = RPM(i);
         T_input(n) = T(j);
         
         n=n+1;
     end
 end
-save('paramInput.mat','RPM_input','T_input');
+save('paramInput.mat','RPM_input','T_input','mistakes');
 
 postProcess
