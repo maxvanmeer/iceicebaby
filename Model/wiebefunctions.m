@@ -26,8 +26,8 @@ elseif strcmp(mode,'couple')
     T = currentCase.T;
     w = currentCase.w;
     EGRf= currentCase.EGRf;
-    EOIt = deg2rad(-2+22*T/2600)/w*1000;    %[ms]!!
-    INJ_durt = 0.5+3*T/2600;                %[ms]
+    EOIt = deg2rad(-2+22*T*6/2600)/w*1000;    %[ms]!!
+    INJ_durt = 0.5+3*T*6/2600;                %[ms]
     SOIt = EOIt-INJ_durt;                   %[ms]
     INJ_durd = rad2deg((INJ_durt/1000)*w);  %[CAD]
     SOId = rad2deg((SOIt/1000)*w);          %[CAD]
@@ -35,7 +35,9 @@ elseif strcmp(mode,'couple')
     % Parameters needed for dP = pressure common rail? Can also be used to
     % calculate QLHV if dP is assumed to be a certain value.
     QLHV = 4.26e7;
-    mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011)/6;           %kg in one cylinder
+
+    mfuel = (2*2*pi*T*6/(0.46*QLHV)+0.00011)/6;               % /6, values are for 6 cylinders. from hints
+    
     Cd = 0.8;                                           %[-]
     D_hole = 180e-6;                                    %[m]
     A_holes = 7*(pi/4)*D_hole^2;                        %[m2]
@@ -48,8 +50,8 @@ elseif strcmp(mode,'couple')
     %indication.
     
     %Argumentation for using these values can be found in 'Proof_TSOI_PSOI'
-%     Temp = 975;                         %[K]
-%     p = 58.8;                           %[bar]
+    %     Temp = 975;                         %[K]
+    %     p = 58.8;                           %[bar]
     Temp = TSOI;
     p = PSOI;
     %Premix
@@ -62,7 +64,7 @@ elseif strcmp(mode,'couple')
     CAignP = rad2deg((SOIt+IDtP)/1000*w); % [deg=CAD]
     
     %Mix (same values as premix)
-    CAignM = rad2deg(w*(IDtP+SOIt)/1000); % [CAD] 
+    CAignM = rad2deg(w*(IDtP+SOIt)/1000); % [CAD]
     
     %Late
     AL=0.237;
@@ -70,7 +72,7 @@ elseif strcmp(mode,'couple')
     TaL=3289;
     mL=0.145;
     IDtL = AL*p^(-nL)*exp(TaL/Temp)*EGRf^mL; %[ms]
-    CAignL = rad2deg(w*(IDtL+SOIt)/1000); % [CAD] 
+    CAignL = rad2deg(w*(IDtL+SOIt)/1000); % [CAD]
     
     %Calculate fP and fM
     if rt<0.8
@@ -80,7 +82,7 @@ elseif strcmp(mode,'couple')
         fP=-0.566+0.7627*rt;
         fM=1.0125-0.4228*rt;
     end
-        
+    
     %Calculate and clip fL
     fL = 1-fP-fM;
     if fL<0

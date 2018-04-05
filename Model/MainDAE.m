@@ -25,7 +25,7 @@ elseif nargin == 1 % Run a specific case
     iCase = varargin{1};
     
 elseif nargin ==3
-    T = varargin{1};
+    T = varargin{1}/6;
     w = varargin{2};
     Torque = T;
 
@@ -34,7 +34,7 @@ elseif nargin ==3
     
     
 elseif nargin==2
-    T=varargin{1};
+    T=varargin{1}/6;
     w=varargin{2};
     Torque = T;
 
@@ -161,11 +161,12 @@ if strcmp(mode,'case')
     EGRf = allCases(iCase-121).EGRf/100;
 elseif strcmp(mode,'couple')
     QLHV=4.26e7;
-%     mfuel = (2*2*pi*T/(0.46*QLHV)+0.00011)/6;               % /6, values are for 6 cylinders
-%     mair = (10.8e-3 + 28.4e-3 *T/2700)/6;                   % From hints, causes low p_plenum (26%)
-    mfuel = 2*pi*T/(2*0.46*QLHV) + 0.000027;                % NOT /6, mfuel and mair for 1 cylinder
-    mair = 2.7e-3 + 6.9e-3*T/2700;                          % From slides, causes high p_plenum (15%)
-
+    mfuel = (2*2*pi*T*6/(0.46*QLHV)+0.00011)/6;               % /6, values are for 6 cylinders. from hints
+    mair = (10.8e-3 + 28.4e-3 *T*6/2700)/6;                   % From hints, causes low p_plenum (26%)
+%     mfuel = (2*pi*T*6/(2*0.46*QLHV) + 0.000027);                % NOT /6, mfuel and mair for 1 cylinder
+%     mair = (2.7e-3 + 6.9e-3*T*6/2700);                          % From slides, causes high p_plenum (15%)
+    %bottom ones are best
+    
     AF = mair/mfuel;
     lambda = AF/AFstoi;
     

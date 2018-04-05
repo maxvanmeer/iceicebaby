@@ -101,8 +101,8 @@ dmidt       = [YI*dmdtI + YE*dmdtE]';
 
 
 global Torque w TSOI PSOI haveToSetSOI
-EOIt = deg2rad(-2+22*Torque/2600)/w*1000;    %[ms]!!
-INJ_durt = 0.5+3*Torque/2600;                %[ms]
+EOIt = deg2rad(-2+22*Torque*6/2600)/w*1000;    %[ms]!!
+INJ_durt = 0.5+3*Torque*6/2600;                %[ms]
 SOIt = EOIt-INJ_durt;                   %[ms]
 SOId = rad2deg((SOIt/1000)*w);          %[CAD]
 EOId = rad2deg((EOIt/1000)*w);          %[CAD]
@@ -178,4 +178,7 @@ Rg = StateCyl.Rg;
 yp = [dQhl-p*dVdt+hpaI*dmdtI+hpaE*dmdtE;
     p*V-Rg*T*m;
     dmidt];
+if yp(3) > 1e10
+   yp 
+end
 end
