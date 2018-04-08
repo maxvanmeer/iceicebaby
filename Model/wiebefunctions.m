@@ -53,18 +53,25 @@ elseif strcmp(mode,'couple')
     %     Temp = 975;                         %[K]
     %     p = 58.8;                           %[bar]
     Temp = TSOI;
+%     Temp = 880;
     p = PSOI;
+%     p = 46;
+
+%     Temp = 975;
+%     p = 58.8;
+    
     %Premix
     AP=0.405;
     nP=0.623;
     TaP=2977;
     mP=0.173;
     IDtP = AP*p^(-nP)*exp(TaP/Temp)*EGRf^mP; %[ms] Ignition Delay
+%     IDtP = ID_alt;
     rt = IDtP / INJ_durt;   %[-]
     CAignP = rad2deg((SOIt+IDtP)/1000*w); % [deg=CAD]
     
     %Mix (same values as premix)
-    CAignM = rad2deg(w*(IDtP+SOIt)/1000); % [CAD]
+    CAignM = CAignP;
     
     %Late
     AL=0.237;

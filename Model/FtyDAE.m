@@ -1,4 +1,6 @@
 function [yp] = FtyDAE(t,y)
+global reducedCaPlot CaPlot ignoreCaSwitch
+
 global Int Exh QLHV SpS Runiv omega Qheatloss dt
 global  mfuIVCClose si EtaComb Bore Stroke rc CA50 BDUR SOC EOC CAignP EOId
 
@@ -25,8 +27,21 @@ m = sum(mi);
 Yi = [mi/m]';
 %%
 Ca          = time2ang(t,omega)/(2*pi)*360; %Crankangle vector for the entire simulation time
-reducedCa   = mod(Ca+360,720)-360;          %Crankangle for one cycle
+if isempty(CaPlot)
+CaCustom = -360;    
+    
+elseif Ca < CaPlot(end) 
+   CaCustom = CaPlot(end); 
+else
+   CaCustom = Ca; 
+end
+reducedCa   = mod(CaCustom+360,720)-360;          %Crankangle for one cycle
+
 CADS        = omega/(2*pi)*360;             %Rotational speed in degrees per second
+reducedCaPlot = [reducedCaPlot reducedCa];
+CaPlot = [CaPlot CaCustom];
+
+
 %% Taking parameters from NASA database
 for ii=1:Nsp                    
     hi(ii) = HNasa(T,SpS(ii));
@@ -112,9 +127,14 @@ if strcmp(currentCase.mode,'couple')
     if reducedCa <= -350
         haveToSetSOI = true;
     end
+%     reducedCa
+%     Ca
+%     haveToSetSOI
     if reducedCa >= SOId && haveToSetSOI == true% You're after start of injection
-        TSOI = T;
-        PSOI = p*1e-5;
+        TSOI = T
+        PSOI = p*1e-5
+%         reducedCa
+%         SOId
         haveToSetSOI = false;
     end
 end
@@ -136,21 +156,27 @@ HR = currentCase.HR;
 ReducedCA = -360:360;
 
 % Useful and important Crank Angles determined from heat release rate:
+CA0dot1 = ReducedCA(find(HR>0.001*HR(length(HR)),1)+1); 
 CA01 = ReducedCA(find(HR>0.01*HR(length(HR)),1)+1); 
 CA10 = ReducedCA(find(HR>0.1*HR(length(HR)),1)+1);
 CA50 = ReducedCA(find(HR>0.5*HR(length(HR)),1)+1);
 CA90 = ReducedCA(find(HR>0.9*HR(length(HR)),1)+1);
+CA95 = ReducedCA(find(HR>0.95*HR(length(HR)),1)+1);
+CA99dot9 = ReducedCA(find(HR>0.999*HR(length(HR)),1)+1);
+
 % BDUR=20;                        % Burn Duration, replace with data case
 BDUR = CA90-CA10;
 CAign = CA50-0.5*BDUR;
 CAend = CAign+BDUR;
 
 if haveToSetSOI
-    SOC = CAign;
-    EOC = CAend;
-else
-    SOC = CAignP;
-    EOC = EOId;
+    SOC = CAign; % Start of COMBUSTION
+%     SOC = CA0dot1;
+    EOC = CAend; % End of COMBUSTION
+    EOC = CA99dot9;
+% else
+%     SOC = CAignP;
+%     EOC = CAend;
 end
 
 
@@ -180,5 +206,8 @@ yp = [dQhl-p*dVdt+hpaI*dmdtI+hpaE*dmdtE;
     dmidt];
 if yp(3) > 1e10
    yp 
+%    TSOI
+%    PSOI
+%    haveToSetSOI
 end
 end

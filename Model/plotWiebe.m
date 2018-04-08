@@ -6,12 +6,12 @@ clear
 load('currentCase.mat');
 currentCase.mode = 'couple';
 iCase = 122;
-currentCase.T = 2637.3;
-currentCase.w = 1200/60*2*pi;
+currentCase.T = 100;
+currentCase.w = 550/60*2*pi;
 currentCase.EGRf = 0.2;
 save('currentCase.mat','currentCase');
 
-CA = -360:0.25:360;
+CA = -360:1:360;
 PSOI = 51.7;
 TSOI = 873.9;
 for i = 1:length(CA)

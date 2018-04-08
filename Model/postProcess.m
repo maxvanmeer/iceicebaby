@@ -29,6 +29,11 @@ for i =1:length(goodParams)
     myCase(i) = load(['output/paramCase',num2str(myParam,'%3.3i'),'.mat']);
     t = myCase(i).time;
     V = myCase(i).V;
+    
+    if length(t) < 3600
+        i
+        continue;
+    end
     REVS = myCase(i).Settings.N/60;
     trev = 1/REVS;
     nREVS = (t(end)-t(1))/trev;
@@ -47,8 +52,8 @@ for i =1:length(goodParams)
     Vp_all = myCase(i).V(it_all);
     pp = p(it);
     
-     tp_all = t(it_all);
- pp_all = p(it_all);
+    tp_all = t(it_all);
+    pp_all = p(it_all);
     
     j=1;
     while p(j)<= p(j+floor(length(it)/2)) % Algorithm to find first intersection point
@@ -92,14 +97,14 @@ for i =1:length(goodParams)
     w = RPM_input(i)/60*2*pi;
     bsfc_input(i) = mfuel/(T_input(i)*w*2*trev)*1000/J;
     
-
+    
     
     T_all = W_all/(2*pi*(nREVS/myCase(i).Settings.Ncyc));     % Torque of every cycle
     T_mean(i) = sum(T_all)/(myCase(i).Settings.Ncyc);            % Mean torque of multiple cycles
     T_V6(i) = 6*T_mean(i);
     
     
-        efficiency(i) = W/Qin;
+    efficiency(i) = W/Qin;
     eff_brake(i) = (2*pi*nREVS/myCase(i).Settings.Ncyc*T_mean(i))/Qin;
     
     myW(i) = W;
@@ -108,7 +113,7 @@ for i =1:length(goodParams)
     IMEP_gross(i) = Wcomp_exp/VDisp;                       % By work of complete cycle
     BMEP(i) = (2*pi*(nREVS/myCase(i).Settings.Ncyc)*T_mean(i))/VDisp;   % By work of measured brake torque
     FMEP(i) = IMEP_gross(i) - BMEP(i);                           % By work caused by friction (= IMEP_gross - BMEP)
-
+    
     
 end
 
@@ -140,7 +145,7 @@ plot3(RPM_input,T_input,efficiency*1.5,'k.');
 
 % F_bsfc = scatteredInterpolant(RPM_input',T_input',bsfc_real','natural','none');
 % q_bsfc = F_bsfc(RPMq,Tq);
-% 
+%
 % figure
 % mesh(RPMq,Tq,q_bsfc);
 % xlabel('RPM [1/min]');

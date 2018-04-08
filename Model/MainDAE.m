@@ -1,4 +1,7 @@
 function MainDAE(varargin)
+global reducedCaPlot CaPlot
+reducedCaPlot = [];
+CaPlot = [];
 %% MainDAE %%
 % The MainDAE file is able to run both a single case, or a T-w couple.
 
@@ -83,8 +86,10 @@ rc      = 17.45;                    % compression ratio
 VDisp   = pi*(Bore/2)^2*Stroke;     % Displacement Volume
 
 global TSOI PSOI haveToSetSOI
-TSOI = 975; % Will be overwritten
-PSOI = 58.8; %idem 
+TSOI = -13.33*log(T) + 943.89
+PSOI = 0.0368*T + 40.752
+
+
 haveToSetSOI = true;
 
 if strcmp(mode,'case')
@@ -206,6 +211,7 @@ Rg      = Runiv/Mave;
 
 if strcmp(mode,'couple')
     p_plenum = rho*Rg*T_plenum;
+%     p_plenum = 3.63e5;
     p_exhaust = p_plenum+0.1*bara;  % exhaust back-pressure
 end
 
@@ -251,7 +257,7 @@ save('currentCase.mat','currentCase');
 
 %% Computing CA values
 
-ReducedCA = -360:360;
+ReducedCA = -360:360; 
 HRR = EtaComb*QLHV*mfuIVCClose*wiebefunctions(ReducedCA,TSOI,PSOI);
 % HRR = EtaComb*QLHV*mfuel*wiebefunctions(ReducedCA);
 
@@ -301,5 +307,5 @@ SaveName = fullfile(DataDir,CaseName);
 V = CylVolumeFie(time);
 save(SaveName,'Settings','Cyl','Int','Exh','Comb','time','y','yNames','V','SpS','HRR','CA10','CA50','CA90','BDUR','mode','HRR');
 fprintf('Saved solution of Case %3i to %s\n',iCase,SaveName);
-
+% save('CaPlots.mat','reducedCaPlot','CaPlot');
 end
